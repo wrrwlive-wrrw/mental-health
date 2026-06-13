@@ -1,0 +1,344 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 页面切换 */
+.page { display: none; }
+.page.active { display: block; }
+
+/* 卡片样式 */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 首页 */
+.home-title {
+  font-size: 28px;
+  text-align: center;
+  color: #4a4a8a;
+  margin-bottom: 10px;
+}
+
+.home-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+.color-legend {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 25px 0;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.dot-green { background: #4caf50; }
+.dot-yellow { background: #ff9800; }
+.dot-orange { background: #f44336; }
+.dot-red { background: #9c27b0; }
+
+.privacy-note {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #888;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 30px auto 0;
+  padding: 14px 32px;
+  font-size: 18px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+}
+
+/* 进度条 */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 25px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+/* 题目样式 */
+.question-item {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.question-text {
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.question-num {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.option-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.option-label:hover {
+  border-color: #667eea;
+  background: #f0f0ff;
+}
+
+.option-label input {
+  display: none;
+}
+
+.option-label.selected {
+  border-color: #667eea;
+  background: #667eea;
+  color: #fff;
+}
+
+/* 导航按钮 */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+.btn-nav {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-prev {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.btn-next {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+
+.btn-nav:hover { transform: translateY(-1px); }
+.btn-nav:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* 结果页 */
+.result-level {
+  text-align: center;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.level-green { background: #e8f5e9; border: 2px solid #4caf50; }
+.level-yellow { background: #fff3e0; border: 2px solid #ff9800; }
+.level-orange { background: #fbe9e7; border: 2px solid #f44336; }
+.level-red { background: #f3e5f5; border: 2px solid #9c27b0; }
+
+.level-icon { font-size: 48px; margin-bottom: 10px; }
+.level-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.level-desc { font-size: 14px; color: #666; }
+
+/* 因子图表 */
+.factor-chart {
+  margin: 25px 0;
+}
+
+.factor-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.factor-name {
+  width: 100px;
+  font-size: 13px;
+  text-align: right;
+  padding-right: 12px;
+  flex-shrink: 0;
+}
+
+.factor-bar-bg {
+  flex: 1;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.factor-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s ease;
+}
+
+.factor-score {
+  width: 40px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding-left: 8px;
+}
+
+/* 预警框 */
+.alert-box {
+  background: #fff0f0;
+  border: 2px solid #f44336;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244,67,54,0.3); }
+  50% { box-shadow: 0 0 0 10px rgba(244,67,54,0); }
+}
+
+.alert-title {
+  color: #d32f2f;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.alert-content { font-size: 14px; line-height: 2; }
+.alert-phone { font-weight: 600; color: #d32f2f; }
+
+/* 建议卡片 */
+.suggestion-box {
+  background: #f8f9ff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.suggestion-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #4a4a8a;
+}
+
+.suggestion-list {
+  list-style: none;
+  padding: 0;
+}
+
+.suggestion-list li {
+  padding: 6px 0;
+  padding-left: 20px;
+  position: relative;
+  font-size: 14px;
+}
+
+.suggestion-list li::before {
+  content: '•';
+  position: absolute;
+  left: 6px;
+  color: #667eea;
+}
+
+/* 响应式 */
+@media (max-width: 600px) {
+  .card { padding: 24px 16px; }
+  .home-title { font-size: 22px; }
+  .options { gap: 6px; }
+  .option-label { padding: 5px 10px; font-size: 12px; }
+  .factor-name { width: 70px; font-size: 12px; }
+  .color-legend { gap: 8px; }
+}
