@@ -1,7 +1,22 @@
 // 用户注册与档案管理系统
-const ROLE_LABELS = { student:'学生', teacher:'老师', social:'社会人员', researcher:'研究人员' };
+const ROLE_LABELS = { admin:'管理员', student:'学生', teacher:'老师', social:'社会人员', researcher:'研究人员' };
 
-function getUsers() { return JSON.parse(localStorage.getItem('mh_users') || '[]'); }
+// 默认管理员账号
+const DEFAULT_ADMIN = {
+  id: 'u_admin', name: '管理员', phone: 'admin',
+  password: 'admin123', gender: '', age: 0, role: 'admin',
+  createdAt: '2024-01-01', testHistory: [], chatHistory: []
+};
+
+function getUsers() {
+  let users = JSON.parse(localStorage.getItem('mh_users') || '[]');
+  // 确保管理员账号始终存在
+  if (!users.find(u => u.id === 'u_admin')) {
+    users.unshift(DEFAULT_ADMIN);
+    localStorage.setItem('mh_users', JSON.stringify(users));
+  }
+  return users;
+}
 function saveUsers(users) { localStorage.setItem('mh_users', JSON.stringify(users)); }
 function getCurrentUser() {
   const id = localStorage.getItem('mh_current');
