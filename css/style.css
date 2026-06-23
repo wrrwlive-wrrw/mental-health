@@ -569,3 +569,130 @@ body {
   color: #555;
   line-height: 1.8;
 }
+
+/* 表单样式 */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus { border-color: #667eea; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+
+/* 用户信息栏 */
+.user-info-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #f8f9ff;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.user-name { font-size: 14px; font-weight: 600; color: #333; }
+.btn-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.btn-link:hover { text-decoration: underline; }
+.btn-logout { color: #f44336; margin-left: auto; }
+
+/* 角色标签 */
+.user-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.role-student { background: #e3f2fd; color: #1565c0; }
+.role-teacher { background: #e8f5e9; color: #2e7d32; }
+.role-social { background: #fff3e0; color: #e65100; }
+.role-researcher { background: #f3e5f5; color: #7b1fa2; }
+
+/* 个人档案页 */
+.profile-header { text-align: center; margin-bottom: 20px; }
+.profile-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-size: 24px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
+.profile-info { margin: 20px 0; }
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+.info-row label { color: #888; }
+.info-row span { color: #333; font-weight: 500; }
+.profile-stats {
+  display: flex; gap: 20px; justify-content: center;
+  margin-top: 20px; padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+.stat-item { text-align: center; }
+.stat-item .stat-num { display: block; font-size: 24px; font-weight: 700; color: #667eea; }
+.stat-item span:last-child { font-size: 12px; color: #888; }
+
+/* 用户管理页 */
+.user-stats-grid {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.user-stat {
+  flex: 1; min-width: 60px;
+  text-align: center;
+  padding: 12px 8px;
+  background: #f8f9ff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.user-stat:hover { background: #e8eaff; }
+.user-stat .stat-num { display: block; font-size: 20px; font-weight: 700; color: #667eea; }
+.user-stat span:last-child { font-size: 11px; color: #888; }
+.user-filter { margin-bottom: 14px; }
+.user-filter select {
+  padding: 8px 14px; border: 2px solid #e0e0e0;
+  border-radius: 10px; font-size: 13px; outline: none;
+}
+.user-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 10px;
+  background: #fafafa; margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.user-card:hover { background: #f0f0ff; }
+.user-card-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.user-card-info { flex: 1; }
+.user-card-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.user-card-detail { font-size: 12px; color: #888; }

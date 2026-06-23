@@ -5,7 +5,7 @@ let answers = {};
 
 // 初始化
 function init() {
-  showPage('home');
+  // 登录状态由 user.js 的 checkAuth 控制页面跳转
 }
 
 // 页面切换
@@ -128,6 +128,8 @@ function calculateResult() {
 
   const level = getLevel(parseFloat(avgScore), factors, positiveCount);
   renderResult(avgScore, positiveCount, totalScore, factors, level);
+  // 保存评估结果到当前用户档案
+  saveTestToUser(avgScore, positiveCount, level, factors);
   showPage('result');
 }
 
@@ -261,6 +263,26 @@ function renderSuggestions(level) {
   s.items.forEach(item => { html += `<li>${item}</li>`; });
   html += '</ul></div>';
   return html;
+}
+
+// 保存评估结果到用户档案
+function saveTestToUser(avgScore, positiveCount, level, factors) {
+  const uid = localStorage.getItem('mh_current');
+  if (!uid) return;
+  const users = JSON.parse(localStorage.getItem('mh_users') || '[]');
+  const user = users.find(u => u.id === uid);
+  if (!user) return;
+  if (!user.testHistory) user.testHistory = [];
+  user.testHistory.push({
+    date: new Date().toISOString().slice(0, 10),
+    time: new Date().toLocaleTimeString(),
+    avgScore, positiveCount, level,
+    topFactors: Object.entries(factors)
+      .sort((a, b) => parseFloat(b[1].score) - parseFloat(a[1].score))
+      .slice(0, 3)
+      .map(([k, v]) => v.name + ':' + v.score)
+  });
+  localStorage.setItem('mh_users', JSON.stringify(users));
 }
 
 // 页面加载完成后初始化

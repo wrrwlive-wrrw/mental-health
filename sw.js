@@ -1,10 +1,11 @@
-const CACHE_NAME = 'mental-health-v2';
+const CACHE_NAME = 'mental-health-v3';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/questions.js',
   './js/app.js',
+  './js/user.js',
   './js/chat.js',
   './js/knowledge.js'
 ];

@@ -1,8 +1,20 @@
 // 心理辅导对话系统 - 含语音输入和智能诊断
 let chatRole = 'student';
-let chatHistory = JSON.parse(localStorage.getItem('mh_chat') || '[]');
+let chatHistory = [];
 let recognition = null;
 let isRecording = false;
+
+// 获取当前用户聊天记录key
+function getChatKey() {
+  const uid = localStorage.getItem('mh_current');
+  return uid ? 'mh_chat_' + uid : 'mh_chat';
+}
+function loadChatHistory() {
+  chatHistory = JSON.parse(localStorage.getItem(getChatKey()) || '[]');
+}
+function saveChatHistory() {
+  localStorage.setItem(getChatKey(), JSON.stringify(chatHistory));
+}
 
 // 心理诊断知识库 - 基于CBT、ACT、正念疗法等前沿方案
 const PSYCH_KB = {
@@ -94,44 +106,128 @@ function sendMessage() {
   chatHistory.push(msg);
   input.value = '';
   renderChat();
-  localStorage.setItem('mh_chat', JSON.stringify(chatHistory));
+  saveChatHistory();
   // 自动诊断响应
   if (chatRole === 'student') setTimeout(() => autoResponse(text), 800);
 }
 
-// 智能自动诊断响应
+// 智能自动诊断响应 - 具备倾听、关怀和专业问答能力
 function autoResponse(text) {
+  // 1. 先检测是否是问候/打招呼
+  if (isGreeting(text)) {
+    replyAs(generateGreeting());
+    return;
+  }
+  // 2. 检测危机信号（优先级最高）
+  if (isCrisis(text)) {
+    replyAs(generateCrisisReply());
+    return;
+  }
+  // 3. 关键词匹配心理问题
   let matched = [];
   for (const [key, item] of Object.entries(PSYCH_KB)) {
     const hits = item.keywords.filter(k => text.includes(k));
     if (hits.length > 0) matched.push({ key, item, score: hits.length });
   }
   matched.sort((a, b) => b.score - a.score);
-
-  let reply = '';
+  // 4. 根据匹配结果分层回复
   if (matched.length === 0) {
-    reply = generateEmpatheticReply(text);
+    replyAs(generateEmpatheticReply(text));
   } else {
-    const top = matched[0].item;
-    reply = generateDiagnosisReply(top, text);
+    // 先共情回应，再给出专业分析
+    const empathy = getEmpathyPrefix(matched[0].key);
+    const diagnosis = generateDiagnosisReply(matched[0].item, text);
+    replyAs(empathy + diagnosis);
   }
-
-  const sysMsg = { role: 'system', text: reply, time: new Date().toLocaleTimeString() };
-  chatHistory.push(sysMsg);
-  renderChat();
-  localStorage.setItem('mh_chat', JSON.stringify(chatHistory));
 }
 
-// 生成共情回复（未匹配到具体问题时）
+function replyAs(text) {
+  const sysMsg = { role: 'system', text, time: new Date().toLocaleTimeString() };
+  chatHistory.push(sysMsg);
+  renderChat();
+  saveChatHistory();
+}
+
+// 判断是否为问候语
+function isGreeting(text) {
+  const greetings = ['你好','hello','hi','嗨','早上好','下午好','晚上好','在吗','有人吗'];
+  return greetings.some(g => text.toLowerCase().includes(g));
+}
+
+// 生成问候回复
+function generateGreeting() {
+  const user = getCurrentUser ? getCurrentUser() : null;
+  const name = user ? user.name : '同学';
+  const greetings = [
+    `${name}你好！我是你的心理健康助手。今天感觉怎么样？有什么想聊聊的吗？`,
+    `你好${name}！很高兴见到你。无论开心还是烦恼，都可以和我说说。我会认真倾听。`,
+    `${name}你好！这里是一个安全的空间，你可以自由表达。想从哪里开始呢？`,
+    `你好！我一直在这里。你最近过得怎么样？有没有什么事情让你牵挂？`
+  ];
+  return greetings[Math.floor(Math.random() * greetings.length)];
+}
+
+// 危机信号检测
+function isCrisis(text) {
+  const crisis = ['自杀','想死','不想活','结束生命','跳楼','割腕','自残','活着没意义'];
+  return crisis.some(k => text.includes(k));
+}
+
+// 危机干预回复
+function generateCrisisReply() {
+  return `<div class="diagnosis-reply" style="border-left-color:#f44336">
+    <div class="diag-header" style="color:#d32f2f">我非常关心你的安全</div>
+    <div class="diag-section">
+      我听到了你说的话，我想让你知道：<strong>你的生命很重要，你值得被帮助。</strong>
+    </div>
+    <div class="diag-section">
+      <strong>请立即联系专业帮助：</strong>
+      <ul>
+        <li>全国心理援助热线：<strong>400-161-9995</strong></li>
+        <li>北京心理危机研究与干预中心：<strong>010-82951332</strong></li>
+        <li>生命热线：<strong>400-821-1215</strong></li>
+        <li>紧急情况请拨打 <strong>120</strong> 或 <strong>110</strong></li>
+      </ul>
+    </div>
+    <div class="diag-section">
+      在等待帮助的过程中，请尝试：深呼吸、去一个安全的地方、联系一个你信任的人。
+      <br>你不需要独自面对这一切。
+    </div></div>`;
+}
+
+// 生成共情回复（未匹配到具体问题时）- 专业倾听与追问
 function generateEmpatheticReply(text) {
+  const len = text.length;
+  // 根据用户输入长度调整回复策略
+  if (len < 5) {
+    const short = [
+      '我在听，你可以多说一些。这里很安全。',
+      '没关系，慢慢来。你想表达什么呢？',
+      '我注意到你似乎有些犹豫。不着急，我会一直在这里。'
+    ];
+    return short[Math.floor(Math.random() * short.length)];
+  }
   const empathyReplies = [
-    '谢谢你愿意分享。能告诉我更多关于你的感受吗？',
-    '我在认真倾听。你现在最困扰的是什么？',
-    '你的感受很重要。可以具体说说发生了什么吗？',
-    '我理解你愿意来倾诉，这本身就是积极的一步。能详细描述一下吗？',
-    '每个人都会遇到困难时期。你愿意多说一些吗？我想更好地理解你的状况。'
+    '谢谢你愿意和我分享这些。我能感受到这件事对你的影响。能告诉我，这种感觉是什么时候开始的吗？',
+    '我听到了你说的话，这确实不容易。在这种情况下，你通常会怎么应对呢？',
+    '你的感受是完全合理的。面对这样的状况，任何人都可能会有类似的反应。你觉得最让你困扰的是哪一部分？',
+    '谢谢你的信任。我想更好地理解你的处境——这种状况对你的日常生活有什么影响吗？',
+    '我很认真地在听你说的每一句话。你提到的这些，有没有和身边的人聊过？',
+    '这听起来确实让你承受了不少。在你看来，什么样的改变会让你感觉好一些？'
   ];
   return empathyReplies[Math.floor(Math.random() * empathyReplies.length)];
+}
+
+// 共情前缀（诊断前先表达理解）
+function getEmpathyPrefix(category) {
+  const prefixes = {
+    anxiety: '<p style="margin-bottom:10px;color:#555">我能感受到你现在的不安和紧张。这种感觉很不好受，但请相信，焦虑是可以被有效管理的。让我帮你分析一下：</p>',
+    depression: '<p style="margin-bottom:10px;color:#555">听到你这样说，我很心疼。你愿意来倾诉，这本身就说明你内心还有力量。请允许我提供一些可能对你有帮助的信息：</p>',
+    stress: '<p style="margin-bottom:10px;color:#555">我理解你现在承受着很大的压力。你已经很努力了，这份坚持值得被看到。以下是一些可能帮到你的方法：</p>',
+    relationship: '<p style="margin-bottom:10px;color:#555">人际关系中的困扰确实会让人很难受。你的感受是被理解的。让我们一起来看看可以怎么改善：</p>',
+    selfworth: '<p style="margin-bottom:10px;color:#555">我想告诉你，你比你以为的更有价值。这种自我怀疑的声音不代表事实。让我帮你换个角度看看：</p>'
+  };
+  return prefixes[category] || '';
 }
 
 // 生成诊断回复（匹配到心理问题时）
@@ -216,13 +312,14 @@ function updateVoiceStatus(msg) {
 function clearChat() {
   if (confirm('确定清空所有对话记录？')) {
     chatHistory = [];
-    localStorage.removeItem('mh_chat');
+    localStorage.removeItem(getChatKey());
     renderChat();
   }
 }
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
+  loadChatHistory();
   renderChat();
   switchRole('student');
   initVoice();
