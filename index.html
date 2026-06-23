@@ -37,6 +37,8 @@
         </div>
 
         <button class="btn btn-primary" onclick="startTest()">开始自评</button>
+        <button class="btn btn-secondary" onclick="showPage('chat')">心理辅导对话</button>
+        <button class="btn btn-secondary" onclick="showPage('knowledge')">心理学常识</button>
       </div>
     </div>
 
@@ -69,10 +71,43 @@
       </div>
     </div>
 
+    <!-- 心理辅导对话页 -->
+    <div id="chat" class="page">
+      <div class="card chat-card">
+        <div class="chat-header">
+          <h2>心理辅导对话</h2>
+          <p>学生与老师的在线沟通平台（支持语音输入）</p>
+          <div class="chat-role-switch">
+            <button class="btn btn-sm" id="roleStudent" onclick="switchRole('student')">我是学生</button>
+            <button class="btn btn-sm" id="roleTeacher" onclick="switchRole('teacher')">我是老师</button>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
+          <button class="btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+          <button class="btn btn-primary btn-send" onclick="sendMessage()">发送</button>
+        </div>
+        <div class="voice-status" id="voiceStatus"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:12px;width:100%">返回首页</button>
+      </div>
+    </div>
+
+    <!-- 心理学常识页 -->
+    <div id="knowledge" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">心理学常识与经典理论</h2>
+        <div id="knowledgeContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
   </div>
 
   <script src="js/questions.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/knowledge.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');

@@ -1,10 +1,12 @@
-const CACHE_NAME = 'mental-health-v1';
+const CACHE_NAME = 'mental-health-v2';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/questions.js',
-  './js/app.js'
+  './js/app.js',
+  './js/chat.js',
+  './js/knowledge.js'
 ];
 
 self.addEventListener('install', e => {
