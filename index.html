@@ -91,11 +91,11 @@
 
           <div class="feature-card" onclick="showPage('chat')">
             <div class="feature-icon">💬</div>
-            <h3 class="feature-title">智能心理辅导对话</h3>
-            <p class="feature-desc">AI智能诊断系统，基于CBT、ACT、正念等前沿疗法，自动分析并给出专业建议</p>
+            <h3 class="feature-title">AI智能心理辅导</h3>
+            <p class="feature-desc">接入AI大模型实时对话，专业心理咨询师级别的倾听、理解与治疗方案。支持实训模拟练习</p>
             <div class="feature-tags">
-              <span class="tag tag-purple">AI诊断</span>
-              <span class="tag tag-orange">语音输入</span>
+              <span class="tag tag-purple">AI大模型</span>
+              <span class="tag tag-orange">实训模拟</span>
             </div>
           </div>
 
@@ -177,21 +177,29 @@
     <div id="chat" class="page">
       <div class="card chat-card">
         <div class="chat-header">
-          <h2>心理辅导对话</h2>
-          <p>学生与老师的在线沟通平台（支持语音输入）</p>
+          <h2>AI智能心理辅导</h2>
+          <div class="chat-mode-switch">
+            <button class="btn btn-sm btn-active" id="modeConsult" onclick="switchChatMode('consult')">心理咨询</button>
+            <button class="btn btn-sm" id="modeTrain" onclick="switchChatMode('train')">实训模拟</button>
+          </div>
+          <p id="chatModeDesc" class="chat-mode-desc">AI心理咨询师为你提供专业心理辅导</p>
           <div class="chat-role-switch">
-            <button class="btn btn-sm" id="roleStudent" onclick="switchRole('student')">我是学生</button>
+            <button class="btn btn-sm btn-active" id="roleStudent" onclick="switchRole('student')">我是学生</button>
             <button class="btn btn-sm" id="roleTeacher" onclick="switchRole('teacher')">我是老师</button>
           </div>
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
-          <input type="text" id="chatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
+          <input type="text" id="chatInput" placeholder="输入你想说的话..." onkeypress="if(event.key==='Enter')sendMessage()">
           <button class="btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
           <button class="btn btn-primary btn-send" onclick="sendMessage()">发送</button>
         </div>
         <div class="voice-status" id="voiceStatus"></div>
-        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:12px;width:100%">返回首页</button>
+        <div class="chat-actions">
+          <button class="btn-link" onclick="clearChat()">清空记录</button>
+          <button class="btn-link" onclick="showAISettings()">API设置</button>
+          <button class="btn-link" onclick="showPage('home')">返回首页</button>
+        </div>
       </div>
     </div>
 

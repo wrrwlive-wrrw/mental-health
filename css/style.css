@@ -522,6 +522,27 @@ body {
   margin-top: 6px;
 }
 
+/* 聊天操作区 */
+.chat-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+.chat-mode-switch { display: flex; justify-content: center; gap: 8px; margin: 8px 0; }
+.chat-mode-desc { font-size: 12px; color: #888; text-align: center; margin-bottom: 8px; }
+
+/* AI打字动画 */
+.typing-dots span {
+  animation: blink 1.4s infinite;
+  animation-fill-mode: both;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%{opacity:.2} 20%{opacity:1} 100%{opacity:.2} }
+
 /* 诊断回复样式 */
 .diagnosis-reply {
   background: #f8f9ff;
