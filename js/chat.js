@@ -202,6 +202,7 @@ function addAIReply(text) {
 
 // ======== 语音合成（TTS）- AI说话 ========
 let ttsEnabled = localStorage.getItem('mh_tts') !== 'off';
+let voiceChatMode = false; // 语音双向对话模式
 
 function toggleTTS() {
   ttsEnabled = !ttsEnabled;
@@ -210,8 +211,43 @@ function toggleTTS() {
   if (btn) btn.textContent = ttsEnabled ? '🔊' : '🔇';
 }
 
+// 切换语音双向对话模式
+function toggleVoiceChatMode() {
+  voiceChatMode = !voiceChatMode;
+  const btn = document.getElementById('voiceChatBtn');
+  if (btn) {
+    btn.classList.toggle('voice-chat-active', voiceChatMode);
+    btn.textContent = voiceChatMode ? '🎙️连续对话中' : '🎙️语音对话';
+  }
+  if (voiceChatMode) {
+    ttsEnabled = true;
+    localStorage.setItem('mh_tts', 'on');
+    const ttsBtn = document.getElementById('ttsBtn');
+    if (ttsBtn) ttsBtn.textContent = '🔊';
+    updateVoiceStatus('语音对话已开启，请说话...');
+    startListening();
+  } else {
+    updateVoiceStatus('');
+    if (isRecording) { recognition.stop(); isRecording = false; }
+    document.getElementById('voiceBtn').classList.remove('recording');
+  }
+}
+
+// 开始监听（语音对话模式用）
+function startListening() {
+  if (!recognition) initVoice();
+  if (!recognition || isRecording || isAIResponding) return;
+  try {
+    recognition.start();
+    isRecording = true;
+    document.getElementById('voiceBtn').classList.add('recording');
+    updateVoiceStatus('正在聆听...');
+  } catch (e) {
+    console.warn('语音启动失败:', e.message);
+  }
+}
+
 function speakText(text) {
-  // 去除HTML标签
   const clean = text.replace(/<[^>]+>/g, '').replace(/\[.*?\]/g, '');
   if (!clean || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
@@ -219,10 +255,15 @@ function speakText(text) {
   utterance.lang = 'zh-CN';
   utterance.rate = 0.9;
   utterance.pitch = 1.0;
-  // 选择中文语音
   const voices = window.speechSynthesis.getVoices();
   const zhVoice = voices.find(v => v.lang.includes('zh'));
   if (zhVoice) utterance.voice = zhVoice;
+  // 朗读结束后，如果是语音对话模式则自动开启麦克风
+  utterance.onend = function() {
+    if (voiceChatMode && !isAIResponding) {
+      setTimeout(startListening, 500);
+    }
+  };
   window.speechSynthesis.speak(utterance);
 }
 
@@ -487,16 +528,25 @@ function initVoice() {
     let t = '';
     for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
     document.getElementById('chatInput').value = t;
-    // 识别结束后自动发送（实现语音对话无缝衔接）
     if (e.results[e.results.length-1].isFinal) {
-      updateVoiceStatus('');
+      if (voiceChatMode) {
+        updateVoiceStatus('AI思考中...');
+      } else {
+        updateVoiceStatus('');
+      }
       setTimeout(() => { if (t.trim()) sendMessage(); }, 300);
     }
   };
   recognition.onend = function() {
     isRecording = false;
     document.getElementById('voiceBtn').classList.remove('recording');
-    updateVoiceStatus('');
+    // 语音对话模式下，如果AI没在回复且非手动停止，自动重启监听
+    if (voiceChatMode && !isAIResponding) {
+      updateVoiceStatus('等待说话...');
+      setTimeout(startListening, 800);
+    } else {
+      updateVoiceStatus('');
+    }
   };
   recognition.onerror = function(e) {
     isRecording = false;
