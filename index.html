@@ -99,6 +99,16 @@
             </div>
           </div>
 
+          <div class="feature-card" onclick="showPage('companion');renderCompanion()">
+            <div class="feature-icon">💕</div>
+            <h3 class="feature-title">情感交流伴侣</h3>
+            <p class="feature-desc">虚拟男友/女友陪伴，每日问候关心，记住你的生活点滴，像真人一样有温度地陪伴</p>
+            <div class="feature-tags">
+              <span class="tag tag-purple">AI伴侣</span>
+              <span class="tag tag-orange">情感陪伴</span>
+            </div>
+          </div>
+
           <div class="feature-card" onclick="showPage('knowledge')">
             <div class="feature-icon">📚</div>
             <h3 class="feature-title">心理学常识与理论</h3>
@@ -293,6 +303,21 @@
       </div>
     </div>
 
+    <!-- 伴侣设置页 -->
+    <div id="companionSetup" class="page">
+      <div class="card companion-card">
+        <h2 style="text-align:center;color:#e91e63;margin-bottom:20px">选择你的伴侣</h2>
+        <div id="companionSetupContent"></div>
+      </div>
+    </div>
+
+    <!-- 伴侣对话页 -->
+    <div id="companion" class="page">
+      <div class="card companion-card">
+        <div id="companionContent"></div>
+      </div>
+    </div>
+
   </div>
 
   <script src="js/questions.js"></script>
@@ -303,6 +328,7 @@
   <script src="js/cases.js"></script>
   <script src="js/supervision.js"></script>
   <script src="js/knowledge-graph.js"></script>
+  <script src="js/companion.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
