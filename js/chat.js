@@ -194,12 +194,12 @@ function addAIReply(text) {
   chatHistory.push(msg);
   renderChat();
   saveChatHistory();
-  // 语音朗读AI回复（朗读完会自动触发onAISpeakDone开启麦克风）
+  // 连续对话：AI回复后自动语音朗读，朗读完自动准备下一轮
   if (ttsEnabled) {
     speakText(text);
   } else if (voiceChatMode) {
-    // TTS关闭但语音对话模式开启，直接重启监听
-    setTimeout(startListening, 500);
+    // TTS关闭但连续对话开启，直接进入下一轮
+    onAISpeakDone();
   }
   // 记录对话用于AI自我学习
   recordForLearning(text);
@@ -207,7 +207,7 @@ function addAIReply(text) {
 
 // ======== 语音合成（TTS）- AI说话 ========
 let ttsEnabled = localStorage.getItem('mh_tts') !== 'off';
-let voiceChatMode = false; // 语音自由对话模式
+let voiceChatMode = false; // 连续对话模式
 let isSpeaking = false; // AI正在朗读
 
 function toggleTTS() {
@@ -217,40 +217,48 @@ function toggleTTS() {
   if (btn) btn.textContent = ttsEnabled ? '🔊' : '🔇';
 }
 
-// 切换语音自由对话模式（一问一答）
+// 切换连续对话模式
 function toggleVoiceChatMode() {
-  // 如果语音识别不可用，只开启TTS语音回复模式
-  if (voiceMethod === 'manual') {
-    voiceChatMode = !voiceChatMode;
-    ttsEnabled = voiceChatMode;
-    localStorage.setItem('mh_tts', ttsEnabled ? 'on' : 'off');
-    const ttsBtn = document.getElementById('ttsBtn');
-    if (ttsBtn) ttsBtn.textContent = ttsEnabled ? '🔊' : '🔇';
-    const btn = document.getElementById('voiceChatBtn');
-    if (btn) {
-      btn.classList.toggle('voice-chat-active', voiceChatMode);
-      btn.textContent = voiceChatMode ? '🔊 语音回复已开启' : '🔊 文字输入+语音回复';
-    }
-    updateVoiceStatus(voiceChatMode ? '请输入文字，AI会语音回复你' : '');
-    return;
-  }
-
   voiceChatMode = !voiceChatMode;
   const btn = document.getElementById('voiceChatBtn');
-  if (btn) {
-    btn.classList.toggle('voice-chat-active', voiceChatMode);
-    btn.textContent = voiceChatMode ? '🎙️对话中..点击关闭' : '🎙️语音对话';
-  }
+
   if (voiceChatMode) {
     ttsEnabled = true;
     localStorage.setItem('mh_tts', 'on');
     const ttsBtn = document.getElementById('ttsBtn');
     if (ttsBtn) ttsBtn.textContent = '🔊';
-    updateVoiceStatus('🟢 语音对话已开启，请说话');
-    startListening();
+
+    // 检测语音识别是否可用
+    if (voiceMethod === 'web' && recognition) {
+      // 语音识别可用，开启全语音模式
+      if (btn) {
+        btn.classList.add('voice-chat-active');
+        btn.textContent = '🎙️ 连续对话中...';
+      }
+      updateVoiceStatus('🟢 语音对话已开启，请说话');
+      startListening();
+    } else {
+      // 语音识别不可用，开启自动问答模式（打字+语音回复）
+      if (btn) {
+        btn.classList.add('voice-chat-active');
+        btn.textContent = '💬 连续对话中...';
+      }
+      updateVoiceStatus('✅ 连续对话已开启：输入文字回车发送，AI自动语音回复');
+      focusInput();
+    }
   } else {
     stopVoiceChat();
+    if (btn) {
+      btn.classList.remove('voice-chat-active');
+      btn.textContent = '🎙️ 开启连续对话';
+    }
   }
+}
+
+// 聚焦输入框
+function focusInput() {
+  const input = document.getElementById('chatInput');
+  if (input) { input.focus(); input.placeholder = '请输入你想说的话，按回车发送...'; }
 }
 
 // 完全停止语音对话
@@ -263,11 +271,14 @@ function stopVoiceChat() {
   }
   document.getElementById('voiceBtn').classList.remove('recording');
   updateVoiceStatus('');
+  const input = document.getElementById('chatInput');
+  if (input) input.placeholder = '输入你想说的话...';
 }
 
 // 开始监听麦克风
 function startListening() {
   if (!voiceChatMode) return;
+  if (voiceMethod !== 'web') return;
   if (!recognition) initVoice();
   if (!recognition) return;
   if (isRecording) return;
@@ -278,25 +289,30 @@ function startListening() {
     document.getElementById('voiceBtn').classList.add('recording');
     updateVoiceStatus('🟢 正在聆听...请说话');
   } catch (e) {
-    // 如果已经在运行，忽略错误
     console.warn('语音启动:', e.message);
     setTimeout(() => { if (voiceChatMode && !isRecording) startListening(); }, 1000);
   }
 }
 
-// AI说完后的回调 - 重新开始监听
+// AI说完后的回调 - 自动准备下一轮
 function onAISpeakDone() {
   isSpeaking = false;
-  if (voiceChatMode) {
-    updateVoiceStatus('🟢 AI说完了，请你说话...');
-    setTimeout(startListening, 800);
+  if (!voiceChatMode) return;
+
+  if (voiceMethod === 'web' && recognition) {
+    // 全语音模式：自动重新开始监听
+    updateVoiceStatus('🟢 请继续说话...');
+    setTimeout(startListening, 600);
+  } else {
+    // 文字模式：自动聚焦输入框等待用户输入
+    updateVoiceStatus('✅ 请继续输入...');
+    focusInput();
   }
 }
 
 function speakText(text) {
   const clean = text.replace(/<[^>]+>/g, '').replace(/\[.*?\]/g, '');
   if (!clean || !window.speechSynthesis) {
-    // 没有TTS能力时直接回调
     onAISpeakDone();
     return;
   }
@@ -307,7 +323,7 @@ function speakText(text) {
     document.getElementById('voiceBtn').classList.remove('recording');
   }
   isSpeaking = true;
-  if (voiceChatMode) updateVoiceStatus('🔊 AI正在说话...');
+  if (voiceChatMode) updateVoiceStatus('🔊 AI正在回答...');
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(clean);
   utterance.lang = 'zh-CN';
@@ -636,69 +652,34 @@ function initVoice() {
     }
   };
 
-  // 测试一下语音识别是否真的可用
-  testVoiceAvailability();
-}
-
-// 测试语音识别可用性
-function testVoiceAvailability() {
-  if (!recognition) return;
-  // 先尝试启动，如果3秒内报错就切换模式
-  const testTimeout = setTimeout(() => {
-    // 正常启动了，说明可用
-    if (isRecording) {
-      recognition.stop();
-      isRecording = false;
-    }
-  }, 3000);
-
-  const origOnError = recognition.onerror;
-  recognition.onerror = function(e) {
-    clearTimeout(testTimeout);
-    recognition.onerror = origOnError;
-    if (e.error === 'network' || e.error === 'service-not-allowed') {
-      switchToManualMode();
-    }
-  };
-  recognition.onend = function() {
-    clearTimeout(testTimeout);
-    isRecording = false;
-    document.getElementById('voiceBtn').classList.remove('recording');
-    // 恢复正常回调
-    recognition.onerror = origOnError;
-    recognition.onend = function() {
-      isRecording = false;
-      document.getElementById('voiceBtn').classList.remove('recording');
-    };
-  };
 }
 
 // 切换为手动语音模式（不依赖Google服务）
 function switchToManualMode() {
   voiceMethod = 'manual';
-  voiceChatMode = false;
-  const btn = document.getElementById('voiceChatBtn');
-  if (btn) {
-    btn.classList.remove('voice-chat-active');
-    btn.textContent = '🎙️语音对话';
+  // 如果连续对话已开启，保持开启但切换为文字模式
+  if (voiceChatMode) {
+    const btn = document.getElementById('voiceChatBtn');
+    if (btn) btn.textContent = '💬 连续对话中...';
+    updateVoiceStatus('✅ 语音输入不可用，请打字输入，AI自动语音回复');
+    focusInput();
+  } else {
+    updateVoiceStatus('');
   }
   updateVoiceUI();
-  updateVoiceStatus('语音服务不可用，请使用文字输入，AI会语音回复你');
 }
 
 // 更新语音相关UI
 function updateVoiceUI() {
   const voiceBtn = document.getElementById('voiceBtn');
-  const chatBtn = document.getElementById('voiceChatBtn');
-  if (voiceMethod === 'manual') {
-    if (voiceBtn) voiceBtn.style.display = 'none';
-    if (chatBtn) chatBtn.textContent = '🔊 文字输入+语音回复';
+  if (voiceMethod === 'manual' && voiceBtn) {
+    voiceBtn.style.display = 'none';
   }
 }
 
 function toggleVoice() {
   if (voiceMethod === 'manual') {
-    alert('语音识别服务不可用（需要科学上网或Chrome浏览器）。\n\n请直接打字输入，AI会用语音回复你。');
+    alert('语音识别服务不可用（需要Chrome浏览器+科学上网）。\n\n请点击"开启连续对话"，打字输入后AI会自动语音回复你。');
     return;
   }
   if (!recognition) initVoice();
