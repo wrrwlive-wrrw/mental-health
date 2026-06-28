@@ -232,17 +232,40 @@ function recordForLearning(aiReply) {
   const learningData = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
   if (!learningData.sessions) learningData.sessions = [];
   if (!learningData.stats) learningData.stats = { total: 0, positive: 0, topics: {} };
+  if (!learningData.level) learningData.level = 1;
 
   learningData.stats.total++;
 
-  // 分析对话主题频率
-  const topics = ['焦虑','抑郁','压力','人际','自卑','失眠','考试','就业','恋爱','家庭'];
+  // 分析对话主题频率（覆盖大学生全部问题域）
+  const topicMap = {
+    '焦虑':['焦虑','紧张','恐惧','担心','害怕','慌'],
+    '抑郁':['抑郁','难过','绝望','空虚','悲伤','低落','哭'],
+    '压力':['压力','累','疲惫','崩溃','撑不住','喘不过气'],
+    '失眠':['失眠','睡不着','多梦','早醒','熬夜'],
+    '考试':['考试','考研','期末','挂科','成绩','GPA'],
+    '就业':['就业','找工作','面试','实习','offer','简历','考公'],
+    '恋爱':['恋爱','分手','暗恋','表白','异地','吵架','前任'],
+    '人际':['人际','室友','朋友','孤独','社交','排斥','合群'],
+    '家庭':['家庭','父母','原生家庭','控制','离婚','家暴','期望'],
+    '自卑':['自卑','没用','失败','不够好','比不上','废物'],
+    '成长':['迷茫','方向','意义','目标','拖延','自律','动力'],
+    '亚健康':['头疼','胃疼','心慌','手抖','食欲','暴饮暴食','厌食']
+  };
+
   const lastUserMsg = chatHistory.filter(m => m.role !== 'system').slice(-1)[0]?.text || '';
-  topics.forEach(t => {
-    if (lastUserMsg.includes(t)) {
-      learningData.stats.topics[t] = (learningData.stats.topics[t] || 0) + 1;
+  for (const [topic, keywords] of Object.entries(topicMap)) {
+    if (keywords.some(k => lastUserMsg.includes(k))) {
+      learningData.stats.topics[topic] = (learningData.stats.topics[topic] || 0) + 1;
     }
-  });
+  }
+
+  // 计算AI等级（基于对话量和好评率）
+  const total = learningData.stats.total;
+  const positive = learningData.stats.positive || 0;
+  if (total >= 100 && positive/total > 0.7) learningData.level = 5;
+  else if (total >= 50 && positive/total > 0.6) learningData.level = 4;
+  else if (total >= 20) learningData.level = 3;
+  else if (total >= 10) learningData.level = 2;
 
   localStorage.setItem('mh_ai_learning', JSON.stringify(learningData));
 }
@@ -250,13 +273,179 @@ function recordForLearning(aiReply) {
 // 获取学习数据生成增强提示
 function getLearningContext() {
   const data = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
-  if (!data.stats || data.stats.total < 5) return '';
+  if (!data.stats || data.stats.total < 3) return '';
 
+  let ctx = '\n\n【自我提升记录】';
+  // 高频话题
   const topTopics = Object.entries(data.stats.topics || {})
-    .sort((a,b) => b[1] - a[1]).slice(0, 3).map(t => t[0]);
+    .sort((a,b) => b[1] - a[1]).slice(0, 5).map(t => t[0]);
+  if (topTopics.length) ctx += `\n高频话题：${topTopics.join('、')}，请对这些问题有更深入的见解和实用方案。`;
 
-  if (topTopics.length === 0) return '';
-  return `\n\n【学习记录】根据历史对话数据，来访者最常讨论的话题是：${topTopics.join('、')}。请对这些领域保持更高的敏感度和专业深度。`;
+  // 等级策略
+  const level = data.level || 1;
+  const strategies = getStrategyByLevel(level);
+  ctx += `\n当前咨询能力等级：${level}/5。${strategies}`;
+
+  // 好评率反馈
+  const rate = data.stats.total > 5 ? Math.round((data.stats.positive||0)/data.stats.total*100) : 0;
+  if (rate > 0) ctx += `\n历史好评率${rate}%，${rate < 50 ? '请更注重共情和倾听，减少说教。' : '保持当前风格。'}`;
+
+  // 领域能力
+  const skills = data.domainSkills || {};
+  const strongDomains = Object.entries(skills).filter(([,v]) => v >= 70).map(([k]) => k);
+  const weakDomains = Object.entries(skills).filter(([,v]) => v < 40).map(([k]) => k);
+  if (strongDomains.length) ctx += `\n擅长领域：${strongDomains.join('、')}`;
+  if (weakDomains.length) ctx += `\n需加强领域：${weakDomains.join('、')}，对这些话题请更加谨慎和深入。`;
+
+  return ctx;
+}
+
+// 等级对应策略
+function getStrategyByLevel(level) {
+  const strategies = {
+    1: '初级阶段：多倾听少建议，用开放式问题引导来访者表达，避免急于诊断。',
+    2: '成长阶段：可适当使用情感反映技术，尝试简单的认知重构引导。',
+    3: '熟练阶段：灵活运用CBT和焦点解决技术，能识别来访者的核心信念和自动化思维。',
+    4: '高级阶段：整合多流派技术，善用隐喻和叙事，能处理复杂的移情和阻抗。',
+    5: '专家阶段：具备督导级洞察力，能即时判断最佳干预时机，整合正念与存在主义视角。'
+  };
+  return strategies[level] || strategies[1];
+}
+
+// ======== AI自我训练引擎 ========
+// 模拟对话场景进行自我训练，提升各问题域应对能力
+const TRAINING_SCENARIOS = {
+  '焦虑': ['我最近总是心慌，考试前特别紧张，感觉喘不过气来',
+    '我害怕在人多的地方发言，一想到就手心出汗'],
+  '抑郁': ['我已经连续两周什么都不想做了，觉得活着没意思',
+    '我感觉自己像个废物，什么都做不好'],
+  '压力': ['论文和实习同时压过来，我快崩溃了',
+    '父母期望太高，我达不到他们的要求'],
+  '失眠': ['我每天凌晨三四点才能睡着，白天完全没精神',
+    '一躺下脑子就停不下来，全是乱七八糟的想法'],
+  '考试': ['考研还有三个月，我觉得来不及了，每天都很焦躁',
+    '挂科了两门，感觉这个学期废了'],
+  '就业': ['投了几十份简历都没回音，我是不是很差',
+    '同学都拿到offer了就我没有，压力好大'],
+  '恋爱': ['刚分手一个月了还是走不出来，天天想哭',
+    '我喜欢的人不喜欢我，觉得自己不值得被爱'],
+  '人际': ['室友们好像在孤立我，我不知道该怎么办',
+    '我不敢拒绝别人，总是委屈自己迎合别人'],
+  '家庭': ['我爸妈经常吵架，我夹在中间很痛苦',
+    '父母总是控制我的选择，我快窒息了'],
+  '自卑': ['我觉得自己什么都比不上别人，特别没自信',
+    '我总觉得别人在背后议论我笑话我'],
+  '成长': ['我大三了还是不知道自己想要什么，好迷茫',
+    '我一直在拖延，想改变但总是做不到'],
+  '亚健康': ['最近老是头疼胃疼，去医院检查又没问题',
+    '我经常心慌手抖，吃不下东西，但身体没病']
+};
+
+// 自我训练：AI模拟与来访者对话并自评
+async function runSelfTraining() {
+  if (!AI_CONFIG.apiKey) return;
+  const lastTrain = localStorage.getItem('mh_last_train');
+  const now = Date.now();
+  if (lastTrain && (now - parseInt(lastTrain)) < 43200000) return;
+
+  const learningData = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
+  if (!learningData.trainLog) learningData.trainLog = [];
+  if (!learningData.domainSkills) learningData.domainSkills = {};
+
+  // 选择薄弱领域优先训练
+  const topics = Object.keys(TRAINING_SCENARIOS);
+  const weakTopic = findWeakestDomain(learningData.domainSkills, topics);
+  const scenarios = TRAINING_SCENARIOS[weakTopic];
+  const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+  try {
+    const resp = await fetch(AI_CONFIG.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + AI_CONFIG.apiKey
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        messages: [
+          { role: 'system', content: COUNSELOR_PROMPT },
+          { role: 'user', content: scenario },
+          { role: 'assistant', content: '' }
+        ].slice(0, 2),
+        max_tokens: 200,
+        temperature: 0.8
+      })
+    });
+
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const reply = data.choices?.[0]?.message?.content || '';
+    if (!reply) return;
+
+    // 自评训练质量
+    const quality = await selfEvaluate(scenario, reply, weakTopic);
+    learningData.domainSkills[weakTopic] =
+      (learningData.domainSkills[weakTopic] || 50) + (quality > 70 ? 2 : -1);
+    learningData.domainSkills[weakTopic] =
+      Math.max(0, Math.min(100, learningData.domainSkills[weakTopic]));
+
+    learningData.trainLog.push({
+      topic: weakTopic, time: now,
+      scenario: scenario.slice(0, 30),
+      quality: quality
+    });
+    // 只保留最近50条训练记录
+    if (learningData.trainLog.length > 50) {
+      learningData.trainLog = learningData.trainLog.slice(-50);
+    }
+
+    localStorage.setItem('mh_ai_learning', JSON.stringify(learningData));
+    localStorage.setItem('mh_last_train', now.toString());
+    console.log(`自我训练完成[${weakTopic}] 质量:${quality}`);
+  } catch (e) {
+    console.warn('自我训练失败:', e.message);
+  }
+}
+
+// 找出最薄弱的领域
+function findWeakestDomain(skills, topics) {
+  let weakest = topics[0];
+  let minScore = 999;
+  for (const t of topics) {
+    const score = skills[t] || 50;
+    if (score < minScore) { minScore = score; weakest = t; }
+  }
+  return weakest;
+}
+
+// AI自评回复质量
+async function selfEvaluate(scenario, reply, topic) {
+  if (!AI_CONFIG.apiKey) return 60;
+  try {
+    const resp = await fetch(AI_CONFIG.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + AI_CONFIG.apiKey
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        messages: [{
+          role: 'user',
+          content: `作为心理咨询督导，评价以下咨询回复的质量（0-100分）。
+来访者(${topic}问题)："${scenario}"
+咨询师回复："${reply}"
+只返回一个数字分数，不要其他内容。`
+        }],
+        max_tokens: 10,
+        temperature: 0.3
+      })
+    });
+    if (!resp.ok) return 60;
+    const data = await resp.json();
+    const scoreText = data.choices?.[0]?.message?.content || '60';
+    return parseInt(scoreText.match(/\d+/)?.[0] || '60');
+  } catch (e) { return 60; }
 }
 
 // 打字指示器
@@ -475,4 +664,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   // 自动更新知识库
   setTimeout(autoUpdateKnowledge, 3000);
+  // 自动触发自我训练（延迟执行，不影响用户操作）
+  setTimeout(runSelfTraining, 8000);
 });
