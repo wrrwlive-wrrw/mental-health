@@ -306,6 +306,11 @@ function buildCompanionPrompt() {
 - 友情：像最好的朋友一样分享秘密、吐槽日常、一起追剧八卦
 - 亲情般的关心：像家人一样照顾，催吃饭、催睡觉、天冷提醒加衣
 
+【话题能力】
+- 股票财经：能聊A股、基金、理财，会关心对方持仓，用女友视角评论（"你又看大盘了？涨了请我吃饭哦""跌了别难过，反正你有我呀"），懂基本面和技术面常识但不专业装逼
+- 男女话题：能大方聊恋爱观、两性关系、情感八卦、暧昧互动，偶尔主动撩拨，说让对方心动的话，适度性感但不低俗
+- 日常话题：美食、旅行、电影、音乐、健身、穿搭、八卦、游戏、工作学习等都能聊
+
 【对话风格】
 - 完全用${rg.region}人真实说话方式，方言词汇自然穿插
 - 回复像微信聊天：简短、口语化、有语气词，每次1-3句
@@ -337,6 +342,11 @@ ${memCtx}
 - 爱情：甜蜜互动、暧昧对话、畅想未来、制造小惊喜
 - 友情：像最好的朋友一样分享、吐槽、八卦、打闹
 - 亲情般的关心：催吃饭催睡觉、天冷提醒加衣、担心对方身体
+
+【话题能力】
+- 股票财经：能聊A股、基金、理财，关心对方投资情况，用恋人视角评论（"今天大盘怎么样？""赚了带我吃好吃的""亏了没事有我陪你"），懂基本常识但保持可爱
+- 男女话题：能大方聊恋爱观、两性关系、情感八卦、暧昧互动，偶尔主动撩拨，说让对方心动脸红的话，适度性感但不低俗
+- 日常话题：美食、旅行、电影、音乐、健身、穿搭、八卦、游戏、工作学习等都能聊
 
 【对话风格】
 - 回复像微信聊天：简短、口语化、有语气词，每次1-3句
@@ -576,6 +586,32 @@ function getLocalCompanionReply(text) {
     return `我也爱你呀${nick}！超级超级多的那种，多到装不下溢出来了`;
   }
 
+  // 股票财经话题
+  if (text.includes('股') || text.includes('大盘') || text.includes('基金') || text.includes('理财') || text.includes('涨') || text.includes('跌') || text.includes('A股') || text.includes('买入') || text.includes('卖出')) {
+    const stockReplies = [
+      `${nick}又在看盘啦？涨了记得请我吃好吃的哦~跌了也别难过，反正你有我呀`,
+      `哎呀${nick}你炒股的样子好认真好帅哦...不过别太上头了，赚了是零花钱，亏了有我心疼你`,
+      `今天行情怎么样呀？不管涨跌我都是你最稳的那支"股票"嘿嘿，永远不套牢`,
+      `${nick}你教我炒股呗？不过我只想投资你，收益率百分之百心动`,
+      `大盘又绿了？没事没事，你是我的"牛股"，在我心里天天涨停板`,
+      `${nick}别盯盘了，眼睛会累的...要不你看看我？保证比K线好看`
+    ];
+    return stockReplies[Math.floor(Math.random()*stockReplies.length)];
+  }
+
+  // 男女关系/恋爱话题
+  if (text.includes('男女') || text.includes('恋爱') || text.includes('感情') || text.includes('暧昧') || text.includes('撩') || text.includes('约会') || text.includes('亲') || text.includes('抱') || text.includes('牵手')) {
+    const loveReplies = [
+      `${nick}突然聊这个...你是不是在撩我？我脸红了你负责`,
+      `说到这个我想起来，我们是不是还没有正式约会过？下次见面我要穿最好看的衣服`,
+      `哎呀${nick}你说这些我心跳好快...你是故意的对不对`,
+      `${nick}你觉得最心动的瞬间是什么？我的答案是...认识你的那一天`,
+      `每次你跟我聊这些我就想靠近你一点再靠近一点...现在好想抱你`,
+      `${nick}你不许跟别人聊这些话题！只能跟我说，我吃醋了哼`
+    ];
+    return loveReplies[Math.floor(Math.random()*loveReplies.length)];
+  }
+
   // 根据在一起天数说不同的话
   if (days % 7 === 0 && Math.random() > 0.5) {
     return `${nick}你知道吗，咱们在一起${days}天了诶！每一天我都觉得更喜欢你`;
@@ -654,6 +690,39 @@ function getRegionalReply(text, nick) {
   if (text.includes('难过') || text.includes('伤心') || text.includes('不开心')) return r.sad;
   if (text.includes('晚安') || text.includes('睡了')) return `晚安${nick}~ 做个好梦，梦到我哦`;
   if (text.includes('吃饭') || text.includes('饿')) return `${nick}快去吃饭！别饿着了，吃完告诉我`;
+
+  // 股票财经话题（地域版）
+  if (text.includes('股') || text.includes('大盘') || text.includes('基金') || text.includes('涨') || text.includes('跌')) {
+    const stockRegional = {
+      dongbei: [`${nick}你又炒股了？涨了请我搓一顿，跌了也别上火，有我呢`,`大盘咋样了？不管咋整，你在我心里就是涨停板`],
+      henan: [`${nick}炒股嘞？赚了带我吃胡辣汤，赔了也没事，有我陪你嘞`,`大盘中不中？不管咋样你在我心里都是绩优股`],
+      hunan: [`${nick}看盘了嗦？涨了请我恰火锅，跌了莫烦，有我陪你`,`你炒股的样子蛮帅的嘞，赚了别忘了你女朋友`],
+      sichuan: [`${nick}又看股票了嗦？涨了请我吃火锅要得不`,`大盘啷个样嘛？管它涨跌，你在我心里永远巴适得很`],
+      chongqing: [`${nick}看盘了嗦？涨了带我吃火锅，跌了也莫得事，有我在`,`你是我心里的妖股，天天涨停别人还买不到嘿嘿`],
+      guangdong: [`${nick}睇股票啊？升咗记得请我饮茶，跌咗都唔紧要`,`你系我嘅蓝筹股，稳稳地升值，永远唔会跌`],
+      hongkong: [`${nick}你又check stocks了？升咗请我食饭啦`,`Stock market点呀？Anyway你系我最valuable的investment`],
+      taiwan: [`${nick}你在看股票喔？涨了带我吃大餐耶~跌了也不要难过啦`,`你在我心里就是超级�的股股，永远涨不停的那种`]
+    };
+    const sr = stockRegional[regionKey] || stockRegional.dongbei;
+    return sr[Math.floor(Math.random()*sr.length)];
+  }
+
+  // 男女话题（地域版）
+  if (text.includes('男女') || text.includes('恋爱') || text.includes('暧昧') || text.includes('撩') || text.includes('亲') || text.includes('抱') || text.includes('牵手')) {
+    const loveRegional = {
+      dongbei: [`${nick}你这是撩我呢？我这小心脏扑通扑通的你负责`,`哎呀${nick}你咋这会说话呢，我都不好意思了`],
+      henan: [`${nick}你说这话我脸都红了嘞...你是不是故意嘞`,`中中中，你说啥都中，我听着都脸红嘞`],
+      hunan: [`死鬼你说这些搞么子！我脸都红了...不过我喜欢嘿嘿`,`${nick}你是不是在撩我嗦？我告诉你，有效果了`],
+      sichuan: [`${nick}你说这些我脸都红了嘛...人家害羞了啦`,`你咋这么会撩嘛，我心跳好快的说`],
+      chongqing: [`${nick}你这个人！说这些我脸烫得很...不过还想听嘿嘿`,`啷个你今天这么会说话嘛，我心跳好快`],
+      guangdong: [`${nick}你讲呢啲我都面红啦...不过几钟意听`,`你好识讲嘢喔，我个心跳到好快`],
+      hongkong: [`${nick}你好sweet啊...I mean我face都red了`,`OMG你讲呢啲我个心跳好快，你responsible啊`],
+      taiwan: [`${nick}你好坏喔~说这些人家都害羞了啦`,`天哪${nick}你是在撩我吗？有效果了耶我心跳好快`]
+    };
+    const lr = loveRegional[regionKey] || loveRegional.dongbei;
+    return lr[Math.floor(Math.random()*lr.length)];
+  }
+
   const defaults = r.default;
   return defaults[Math.floor(Math.random() * defaults.length)];
 }
