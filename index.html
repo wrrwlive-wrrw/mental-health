@@ -128,6 +128,36 @@
               <span class="tag tag-green">数据统计</span>
             </div>
           </div>
+
+          <div class="feature-card" onclick="showPage('cases');renderCases()">
+            <div class="feature-icon">📂</div>
+            <h3 class="feature-title">标准化案例库</h3>
+            <p class="feature-desc">30+真实案例，覆盖焦虑、抑郁、人际、就业、家庭五大类，标准化实训练习</p>
+            <div class="feature-tags">
+              <span class="tag tag-orange">30+案例</span>
+              <span class="tag tag-blue">分级练习</span>
+            </div>
+          </div>
+
+          <div class="feature-card" onclick="showPage('supervision');renderSupervision()">
+            <div class="feature-icon">🎯</div>
+            <h3 class="feature-title">AI督导评估</h3>
+            <p class="feature-desc">AI从共情、提问、伦理、危机处理等6维度评估咨询能力，提供专业反馈</p>
+            <div class="feature-tags">
+              <span class="tag tag-purple">6维评估</span>
+              <span class="tag tag-green">专业反馈</span>
+            </div>
+          </div>
+
+          <div class="feature-card" onclick="showPage('knowledgeGraph');renderKnowledgeGraph()">
+            <div class="feature-icon">🧠</div>
+            <h3 class="feature-title">流派知识图谱</h3>
+            <p class="feature-desc">精神分析、CBT、人本主义、存在主义等6大流派可视化关系图谱</p>
+            <div class="feature-tags">
+              <span class="tag tag-blue">6大流派</span>
+              <span class="tag tag-purple">交互图谱</span>
+            </div>
+          </div>
         </div>
 
         <!-- 评估说明 -->
@@ -201,6 +231,7 @@
         </div>
         <div class="voice-status" id="voiceStatus"></div>
         <div class="chat-actions">
+          <button class="btn-link" onclick="endAndSupervise()" style="color:#667eea;font-weight:600">结束并评估</button>
           <button class="btn-link" onclick="clearChat()">清空记录</button>
           <button class="btn-link" onclick="showAISettings()">API设置</button>
           <button class="btn-link" onclick="showPage('home')">返回首页</button>
@@ -235,6 +266,33 @@
       </div>
     </div>
 
+    <!-- 标准化案例库页 -->
+    <div id="cases" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">标准化案例库</h2>
+        <div id="casesContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
+    <!-- AI督导评估页 -->
+    <div id="supervision" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">AI督导评估</h2>
+        <div id="supervisionContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
+    <!-- 流派知识图谱页 -->
+    <div id="knowledgeGraph" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">心理学流派知识图谱</h2>
+        <div id="knowledgeGraphContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
   </div>
 
   <script src="js/questions.js"></script>
@@ -242,6 +300,9 @@
   <script src="js/user.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/knowledge.js"></script>
+  <script src="js/cases.js"></script>
+  <script src="js/supervision.js"></script>
+  <script src="js/knowledge-graph.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');

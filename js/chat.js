@@ -150,7 +150,12 @@ async function callAI(userText) {
   // 根据模式选择系统提示词
   const learningCtx = getLearningContext();
   const knowledgeCtx = getLatestKnowledge();
-  const sysPrompt = (chatMode === 'train' ? VISITOR_PROMPT : COUNSELOR_PROMPT) + learningCtx + knowledgeCtx;
+  let basePrompt = chatMode === 'train' ? VISITOR_PROMPT : COUNSELOR_PROMPT;
+  // 如果有标准化案例人设，优先使用
+  if (chatMode === 'train' && window.currentCasePrompt) {
+    basePrompt = window.currentCasePrompt;
+  }
+  const sysPrompt = basePrompt + learningCtx + knowledgeCtx;
   const messages = [{ role: 'system', content: sysPrompt }, ...recentMsgs];
 
   try {
@@ -707,9 +712,23 @@ function updateVoiceStatus(msg) {
 }
 
 // 清空聊天
+// 结束对话并触发AI督导评估
+function endAndSupervise() {
+  if (chatHistory.length < 4) {
+    alert('对话内容太少，请至少进行2轮对话后再评估。');
+    return;
+  }
+  if (confirm('结束当前对话并生成AI督导评估报告？')) {
+    runSupervision();
+  }
+}
+
+// 清空聊天
 function clearChat() {
   if (confirm('确定清空所有对话记录？')) {
     chatHistory = [];
+    window.currentCasePrompt = null;
+    window.currentTrainCase = null;
     localStorage.removeItem(getChatKey());
     renderChat();
   }
