@@ -192,6 +192,7 @@
         <div class="chat-input-area">
           <input type="text" id="chatInput" placeholder="输入你想说的话..." onkeypress="if(event.key==='Enter')sendMessage()">
           <button class="btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+          <button class="btn-voice" id="ttsBtn" onclick="toggleTTS()">🔊</button>
           <button class="btn btn-primary btn-send" onclick="sendMessage()">发送</button>
         </div>
         <div class="voice-status" id="voiceStatus"></div>

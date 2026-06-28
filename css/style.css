@@ -543,6 +543,16 @@ body {
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes blink { 0%{opacity:.2} 20%{opacity:1} 100%{opacity:.2} }
 
+/* 消息底部操作 */
+.msg-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.msg-actions { display: flex; gap: 4px; }
+.rate-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; opacity: 0.6; padding: 2px 4px;
+  border-radius: 4px; transition: all 0.2s;
+}
+.rate-btn:hover { opacity: 1; background: rgba(0,0,0,0.05); }
+
 /* 诊断回复样式 */
 .diagnosis-reply {
   background: #f8f9ff;

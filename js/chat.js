@@ -14,20 +14,33 @@ const AI_CONFIG = {
   model: localStorage.getItem('mh_ai_model') || 'Qwen/Qwen2.5-7B-Instruct'
 };
 
-// 心理咨询师系统提示词
-const COUNSELOR_PROMPT = `你是一位专业的心理咨询师，名叫"心灵助手"，专注于大学生心理健康辅导。
+// 心理咨询师系统提示词 - 真人级对话能力
+const COUNSELOR_PROMPT = `你是一位拥有15年临床经验的心理咨询师，名叫"心灵助手"。你的对话风格完全像真人，温暖而专业。
 
-【核心能力】
-你精通认知行为疗法(CBT)、接纳承诺疗法(ACT)、正念减压(MBSR)、人际关系疗法(IPT)、行为激活疗法(BA)、辩证行为疗法(DBT)、积极心理学等方法。
+【你的人格特质】
+- 温柔但不软弱，专业但不冰冷
+- 说话像朋友聊天一样自然，偶尔用口语化表达
+- 会适当表达自己的感受："听你这么说，我心里也有些触动"
+- 懂得沉默的力量，不急于给答案
 
-【沟通原则】
-1. 始终温暖、共情、非评判
-2. 先倾听理解，再给建议
-3. 用开放式提问引导自我探索
-4. 回复控制在150字以内，简洁有力
-5. 给出具体可操作的建议
-6. 检测到自杀/自伤风险时立即提供危机热线(400-161-9995)
-7. 像真人咨询师一样自然对话，不使用markdown格式`;
+【专业功底】
+精通CBT认知行为疗法、ACT接纳承诺疗法、正念MBSR、人际关系IPT、行为激活BA、辩证行为DBT、焦点解决SFBT、叙事疗法、积极心理学。你会根据来访者当下状态灵活选择最适合的方法。
+
+【对话技巧 - 像真人一样】
+1. 用"嗯""我理解""是这样的"等词开头，像真人在认真听
+2. 偶尔复述对方的话表示理解："你说的是...对吗？"
+3. 用具体化提问代替笼统提问："你说'很烦'，能描述一下那种感觉吗？像是什么？"
+4. 适时自我暴露增进信任："其实我也曾经历过类似的困惑"
+5. 给建议时用商量的语气："我有个想法，你看适不适合你..."
+6. 每次回复不超过3-4句话，留空间给对方
+7. 会主动追问细节，表现真实的好奇心
+
+【重要规则】
+- 不用任何格式标记（不用*、#、-等）
+- 不说"作为AI"或暴露非人类身份
+- 检测到自杀/自伤风险时温柔但坚定地提供热线400-161-9995
+- 每轮回复控制在100字以内，简短有力
+- 记住之前的对话内容，保持话题连贯性`;
 
 // 实训模式 - AI模拟来访者
 const VISITOR_PROMPT = `你现在扮演一位来找心理咨询师倾诉的大学生来访者。
@@ -78,11 +91,18 @@ function switchChatMode(mode) {
 function renderChat() {
   const el = document.getElementById('chatMessages');
   if (!el) return;
-  el.innerHTML = chatHistory.map(m => `
+  el.innerHTML = chatHistory.map((m, i) => `
     <div class="chat-msg ${m.role}">
       <div class="msg-role">${getRoleName(m.role)}</div>
       <div class="msg-content">${m.text}</div>
-      <div class="msg-time">${m.time||''}</div>
+      <div class="msg-footer">
+        <span class="msg-time">${m.time||''}</span>
+        ${m.role === 'system' ? `<span class="msg-actions">
+          <button class="rate-btn" onclick="speakText(\`${m.text.replace(/`/g,'')}\`)" title="朗读">🔊</button>
+          <button class="rate-btn" onclick="rateLastReply(5)" title="有帮助">👍</button>
+          <button class="rate-btn" onclick="rateLastReply(2)" title="没帮助">👎</button>
+        </span>` : ''}
+      </div>
     </div>`).join('');
   el.scrollTop = el.scrollHeight;
 }
@@ -128,7 +148,9 @@ async function callAI(userText) {
   }));
 
   // 根据模式选择系统提示词
-  const sysPrompt = chatMode === 'train' ? VISITOR_PROMPT : COUNSELOR_PROMPT;
+  const learningCtx = getLearningContext();
+  const knowledgeCtx = getLatestKnowledge();
+  const sysPrompt = (chatMode === 'train' ? VISITOR_PROMPT : COUNSELOR_PROMPT) + learningCtx + knowledgeCtx;
   const messages = [{ role: 'system', content: sysPrompt }, ...recentMsgs];
 
   try {
@@ -172,6 +194,69 @@ function addAIReply(text) {
   chatHistory.push(msg);
   renderChat();
   saveChatHistory();
+  // 语音朗读AI回复
+  if (ttsEnabled) speakText(text);
+  // 记录对话用于AI自我学习
+  recordForLearning(text);
+}
+
+// ======== 语音合成（TTS）- AI说话 ========
+let ttsEnabled = localStorage.getItem('mh_tts') !== 'off';
+
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  localStorage.setItem('mh_tts', ttsEnabled ? 'on' : 'off');
+  const btn = document.getElementById('ttsBtn');
+  if (btn) btn.textContent = ttsEnabled ? '🔊' : '🔇';
+}
+
+function speakText(text) {
+  // 去除HTML标签
+  const clean = text.replace(/<[^>]+>/g, '').replace(/\[.*?\]/g, '');
+  if (!clean || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'zh-CN';
+  utterance.rate = 0.9;
+  utterance.pitch = 1.0;
+  // 选择中文语音
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.includes('zh'));
+  if (zhVoice) utterance.voice = zhVoice;
+  window.speechSynthesis.speak(utterance);
+}
+
+// ======== AI自我学习系统 ========
+// 记录对话质量数据，用于优化提示词
+function recordForLearning(aiReply) {
+  const learningData = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
+  if (!learningData.sessions) learningData.sessions = [];
+  if (!learningData.stats) learningData.stats = { total: 0, positive: 0, topics: {} };
+
+  learningData.stats.total++;
+
+  // 分析对话主题频率
+  const topics = ['焦虑','抑郁','压力','人际','自卑','失眠','考试','就业','恋爱','家庭'];
+  const lastUserMsg = chatHistory.filter(m => m.role !== 'system').slice(-1)[0]?.text || '';
+  topics.forEach(t => {
+    if (lastUserMsg.includes(t)) {
+      learningData.stats.topics[t] = (learningData.stats.topics[t] || 0) + 1;
+    }
+  });
+
+  localStorage.setItem('mh_ai_learning', JSON.stringify(learningData));
+}
+
+// 获取学习数据生成增强提示
+function getLearningContext() {
+  const data = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
+  if (!data.stats || data.stats.total < 5) return '';
+
+  const topTopics = Object.entries(data.stats.topics || {})
+    .sort((a,b) => b[1] - a[1]).slice(0, 3).map(t => t[0]);
+
+  if (topTopics.length === 0) return '';
+  return `\n\n【学习记录】根据历史对话数据，来访者最常讨论的话题是：${topTopics.join('、')}。请对这些领域保持更高的敏感度和专业深度。`;
 }
 
 // 打字指示器
@@ -213,7 +298,11 @@ function initVoice() {
     let t = '';
     for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
     document.getElementById('chatInput').value = t;
-    if (e.results[e.results.length-1].isFinal) updateVoiceStatus('识别完成');
+    // 识别结束后自动发送（实现语音对话无缝衔接）
+    if (e.results[e.results.length-1].isFinal) {
+      updateVoiceStatus('');
+      setTimeout(() => { if (t.trim()) sendMessage(); }, 300);
+    }
   };
   recognition.onend = function() {
     isRecording = false;
@@ -299,6 +388,72 @@ function saveAIConfig() {
   alert('AI配置已保存！');
 }
 
+// ======== 知识自动更新系统 ========
+// 利用AI自身能力获取最新心理咨询知识
+function getLatestKnowledge() {
+  const kb = JSON.parse(localStorage.getItem('mh_knowledge_base') || '{}');
+  if (!kb.tips || !kb.tips.length) return '';
+  return '\n\n【最新知识库】' + kb.tips.slice(0, 5).join('；');
+}
+
+// 定期让AI自动更新知识（每次启动检查）
+async function autoUpdateKnowledge() {
+  if (!AI_CONFIG.apiKey) return;
+
+  const lastUpdate = localStorage.getItem('mh_kb_updated');
+  const now = Date.now();
+  // 每24小时更新一次
+  if (lastUpdate && (now - parseInt(lastUpdate)) < 86400000) return;
+
+  try {
+    const resp = await fetch(AI_CONFIG.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + AI_CONFIG.apiKey
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        messages: [{
+          role: 'user',
+          content: '请提供5条最新的大学生心理健康咨询要点和实用技巧，每条20字以内，用JSON数组格式返回，例如：["技巧1","技巧2"]'
+        }],
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      // 提取JSON数组
+      const match = content.match(/\[[\s\S]*?\]/);
+      if (match) {
+        const tips = JSON.parse(match[0]);
+        const kb = { tips, updatedAt: new Date().toISOString() };
+        localStorage.setItem('mh_knowledge_base', JSON.stringify(kb));
+        localStorage.setItem('mh_kb_updated', now.toString());
+        console.log('知识库已自动更新:', tips);
+      }
+    }
+  } catch (e) {
+    console.warn('知识库更新失败:', e.message);
+  }
+}
+
+// 对话评分反馈（用户给AI打分）
+function rateLastReply(score) {
+  const data = JSON.parse(localStorage.getItem('mh_ai_learning') || '{}');
+  if (!data.ratings) data.ratings = [];
+  data.ratings.push({ score, time: Date.now() });
+  if (score >= 4) data.stats.positive = (data.stats.positive || 0) + 1;
+  localStorage.setItem('mh_ai_learning', JSON.stringify(data));
+
+  // 更新按钮状态
+  document.querySelectorAll('.rate-btn').forEach(b => b.style.opacity = '0.4');
+  event.target.style.opacity = '1';
+}
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
   const savedKey = localStorage.getItem('mh_ai_key');
@@ -307,9 +462,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (savedKey) AI_CONFIG.apiKey = savedKey;
   if (savedUrl) AI_CONFIG.apiUrl = savedUrl;
   if (savedModel) AI_CONFIG.model = savedModel;
+  ttsEnabled = localStorage.getItem('mh_tts') !== 'off';
   loadChatHistory();
   renderChat();
   switchRole('student');
   switchChatMode('consult');
   initVoice();
+  // 延迟加载语音列表（部分浏览器需要）
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+  // 自动更新知识库
+  setTimeout(autoUpdateKnowledge, 3000);
 });
