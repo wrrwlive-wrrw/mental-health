@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/fengshui-lab.css">
   <link rel="stylesheet" href="css/fengshui-lab2.css">
+  <link rel="stylesheet" href="css/tcm.css">
 </head>
 <body>
   <div class="container">
@@ -211,6 +212,16 @@
             </div>
           </div>
 
+          <div class="feature-card" onclick="showPage('tcm');renderTcm()">
+            <div class="feature-icon">🏥</div>
+            <h3 class="feature-title">中医智能诊疗</h3>
+            <p class="feature-desc">融合黄帝内经、伤寒论、温病条辨、神农本草经等经典，望闻问切四诊合参，AI辨证施治，开方用药指导</p>
+            <div class="feature-tags">
+              <span class="tag tag-green">四诊合参</span>
+              <span class="tag tag-orange">辨证施治</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- 评估说明 -->
@@ -373,6 +384,15 @@
       </div>
     </div>
 
+    <!-- 中医智能诊疗页 -->
+    <div id="tcm" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#2e7d32;margin-bottom:20px">🏥 中医智能诊疗</h2>
+        <div id="tcmContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
     <!-- 流派知识图谱页 -->
     <div id="knowledgeGraph" class="page">
       <div class="card">
@@ -423,6 +443,15 @@
   <script src="js/fengshui-official.js"></script>
   <script src="js/fengshui-yangsheng.js"></script>
   <script src="js/fengshui.js"></script>
+  <script src="js/tcm-patient.js"></script>
+  <script src="js/tcm-knowledge.js"></script>
+  <script src="js/tcm-cases.js"></script>
+  <script src="js/tcm-prompt.js"></script>
+  <script src="js/tcm-ai.js"></script>
+  <script src="js/tcm-diagnosis.js"></script>
+  <script src="js/tcm-prescription.js"></script>
+  <script src="js/tcm-camera.js"></script>
+  <script src="js/tcm.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
