@@ -2,6 +2,7 @@
 let rxIdentifyHistory = [];
 
 function renderTcmRxIdentify() {
+  const records = getRxRecords();
   return `<div>
     <div style="padding:12px;background:#f3e5f5;border-radius:8px;margin-bottom:14px;border-left:3px solid #7b1fa2">
       <p style="font-size:13px;color:#4a148c;margin:0;line-height:1.7">
@@ -10,10 +11,11 @@ function renderTcmRxIdentify() {
     </div>
     <div class="tcm-form-group">
       <label>输入方式</label>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <button class="tcm-btn tcm-btn-primary" id="rxModeText" onclick="switchRxInputMode('text')">文字输入</button>
         <button class="tcm-btn" id="rxModePhoto" style="background:#f5f5f5" onclick="switchRxInputMode('photo')">拍照识别</button>
         <button class="tcm-btn" id="rxModeClassic" style="background:#f5f5f5" onclick="switchRxInputMode('classic')">经典方选择</button>
+        <button class="tcm-btn" style="background:#e8f5e9;color:#2e7d32" onclick="showRxHistory()">📋 历史记录(${records.length})</button>
       </div>
     </div>
     <div id="rxInputArea">${renderRxTextInput()}</div>
@@ -135,6 +137,9 @@ async function doRxIdentify() {
 
   // 渲染结果
   el.innerHTML = renderRxResult(herbs, localResult, aiResult);
+
+  // 保存分析记录
+  saveRxRecord(input, herbs, localResult, aiResult);
 }
 
 // 解析药物名称
@@ -214,6 +219,81 @@ function clearRxIdentify() {
   if (textEl) textEl.value = '';
   document.getElementById('rxIdentifyResult').innerHTML = '';
   window._rxPhotoData = null;
+}
+
+// 保存与历史记录
+function getRxRecords() {
+  return JSON.parse(localStorage.getItem('tcm_rx_records') || '[]');
+}
+
+function saveRxRecord(input, herbs, localResult, aiResult) {
+  const records = getRxRecords();
+  records.unshift({
+    id: 'rx_' + Date.now().toString(36),
+    date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    input: input,
+    herbs: herbs,
+    matchedFormulas: localResult.map(r => ({ name: r.name, diseases: r.diseases, matchRatio: r.matchRatio })),
+    aiResult: aiResult || ''
+  });
+  // 最多保存50条
+  if (records.length > 50) records.length = 50;
+  localStorage.setItem('tcm_rx_records', JSON.stringify(records));
+}
+
+function showRxHistory() {
+  const records = getRxRecords();
+  const el = document.getElementById('rxIdentifyResult');
+  if (!records.length) {
+    el.innerHTML = '<p style="color:#999;text-align:center">暂无历史记录</p>';
+    return;
+  }
+  el.innerHTML = `<h4 style="color:#7b1fa2;margin:0 0 10px">📋 分析历史记录</h4>
+    ${records.map(r => `<div class="tcm-case-item" onclick="showRxRecordDetail('${r.id}')">
+      <div class="title">${r.herbs.slice(0,5).join('、')}${r.herbs.length>5?'等'+r.herbs.length+'味':''}</div>
+      <div class="meta">${r.date} | ${r.matchedFormulas.length?'匹配：'+r.matchedFormulas.map(f=>f.name).join('、'):'无匹配方剂'}${r.aiResult?' | 含AI分析':''}</div>
+    </div>`).join('')}
+    <button class="tcm-btn tcm-btn-danger" style="margin-top:10px;font-size:12px" onclick="clearRxHistory()">清空所有记录</button>`;
+}
+
+function showRxRecordDetail(id) {
+  const records = getRxRecords();
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  const el = document.getElementById('rxIdentifyResult');
+  let html = `<div style="margin-bottom:10px">
+    <button class="tcm-btn" style="background:#eee;font-size:12px" onclick="showRxHistory()">← 返回列表</button>
+    <span style="font-size:12px;color:#888;margin-left:8px">${r.date}</span>
+  </div>
+  <div style="padding:10px;background:#f3e5f5;border-radius:8px;margin-bottom:12px">
+    <p style="margin:0;font-size:13px"><b>药方（${r.herbs.length}味）：</b></p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+      ${r.herbs.map(h=>`<span style="padding:3px 10px;background:#fff;border:1px solid #ce93d8;border-radius:12px;font-size:12px">${h}</span>`).join('')}
+    </div>
+    <p style="font-size:12px;color:#666;margin-top:6px">原始输入：${r.input}</p>
+  </div>`;
+
+  if (r.matchedFormulas.length) {
+    html += `<h4 style="color:#7b1fa2;margin:10px 0 6px">匹配方剂</h4>`;
+    r.matchedFormulas.forEach(f => {
+      html += `<div class="tcm-rx-card" style="border-color:#ce93d8">
+        <div class="tcm-rx-title" style="color:#7b1fa2">${f.name} <span style="font-size:12px;color:#888;font-weight:normal">${Math.round(f.matchRatio*100)}%</span></div>
+        <p style="font-size:13px;color:#c62828;margin:4px 0"><b>主治：</b>${f.diseases}</p>
+      </div>`;
+    });
+  }
+
+  if (r.aiResult) {
+    html += `<h4 style="color:#2e7d32;margin:10px 0 6px">AI分析</h4>
+      <div class="tcm-chat"><div class="tcm-chat-msg ai">${formatTcmAnswer(r.aiResult)}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function clearRxHistory() {
+  if (!confirm('确定清空所有药方分析记录？')) return;
+  localStorage.removeItem('tcm_rx_records');
+  showRxHistory();
 }
 
 // 药方识别本地知识库
