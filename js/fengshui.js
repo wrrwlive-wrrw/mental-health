@@ -10,7 +10,10 @@ const FENGSHUI_MODULES = {
   divine:   { name:'占卜', icon:'🎴', desc:'易经六十四卦、玉匣记宜忌' },
   yangsheng:{ name:'房中养生', icon:'🧘', desc:'黄帝内经、道家养生、精气神调养' },
   business: { name:'经商', icon:'💰', desc:'商道智慧、财运分析、生意利弊' },
-  official: { name:'做官', icon:'🏛️', desc:'仕途运势、官运分析、进退之道' }
+  official: { name:'做官', icon:'🏛️', desc:'仕途运势、官运分析、进退之道' },
+  health:   { name:'健康档案', icon:'💊', desc:'个人健康记录与命理健康分析' },
+  books:    { name:'经典书籍', icon:'📚', desc:'术数经典原文与学习导读' },
+  aiAgent:  { name:'AI智能体', icon:'🤖', desc:'AI解读命理、指导建议、解决方案' }
 };
 
 let fengshuiCurrentTab = 'fengshui';
@@ -57,7 +60,10 @@ function showFsTab(tab) {
     divine:   renderFsDivine,
     yangsheng:renderFsYangsheng,
     business: renderFsBusiness,
-    official: renderFsOfficial
+    official: renderFsOfficial,
+    health:   renderFsHealth,
+    books:    renderFsBooks,
+    aiAgent:  renderFsAiAgent
   };
   el.innerHTML = renderers[tab] ? renderers[tab]() : '<p>敬请期待</p>';
 }
