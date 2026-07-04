@@ -742,17 +742,29 @@ function showAISettings() {
 
   const html = `<div style="text-align:left;font-size:13px;line-height:2">
     <p><strong>配置AI大模型接口</strong></p>
-    <p>支持任何兼容OpenAI格式的API（DeepSeek、通义千问、豆包等）</p>
+    <p>支持任何兼容OpenAI格式的API</p>
+    <p style="margin-top:6px"><label>快速选择（免费·无需信用卡）：</label><br>
+      <select id="aiPreset" onchange="fillAIPreset()" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px">
+        <option value="">-- 手动填写 --</option>
+        <option value="groq">Groq（推荐·最快·Llama 70B·1000次/天）</option>
+        <option value="openrouter">OpenRouter（20+免费模型·50次/天）</option>
+        <option value="siliconflow">SiliconFlow（国内·中文优化）</option>
+        <option value="cerebras">Cerebras（Llama 70B·超快推理）</option>
+        <option value="mistral">Mistral（法国·免费额度大）</option>
+      </select></p>
     <p style="margin-top:10px"><label>API地址：</label><br>
       <input id="aiUrl" value="${currentUrl}" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></p>
     <p><label>API Key：</label><br>
-      <input id="aiKey" value="${currentKey}" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></p>
+      <input id="aiKey" value="${currentKey}" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px" placeholder="填入你申请的Key"></p>
     <p><label>模型名称：</label><br>
       <input id="aiModel" value="${currentModel}" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:4px"></p>
     <p style="color:#888;font-size:11px;margin-top:8px">
-      推荐：SiliconFlow(免费) api.siliconflow.cn/v1/chat/completions<br>
-      DeepSeek: api.deepseek.com/v1/chat/completions<br>
-      豆包: maas-api.ml-platform-cn.volces.com/v1/chat/completions
+      注册链接（均免费）：<br>
+      <a href="https://console.groq.com" target="_blank">Groq</a> |
+      <a href="https://openrouter.ai" target="_blank">OpenRouter</a> |
+      <a href="https://cloud.siliconflow.cn" target="_blank">SiliconFlow</a> |
+      <a href="https://cloud.cerebras.ai" target="_blank">Cerebras</a> |
+      <a href="https://console.mistral.ai" target="_blank">Mistral</a>
     </p>
   </div>`;
 
@@ -779,6 +791,24 @@ function saveAIConfig() {
   if (key) { AI_CONFIG.apiKey = key; localStorage.setItem('mh_ai_key', key); }
   if (model) { AI_CONFIG.model = model; localStorage.setItem('mh_ai_model', model); }
   alert('AI配置已保存！');
+}
+
+// 快速填充预设API
+function fillAIPreset() {
+  const v = document.getElementById('aiPreset')?.value;
+  const presets = {
+    groq: { url:'https://api.groq.com/openai/v1/chat/completions', model:'llama-3.3-70b-versatile' },
+    openrouter: { url:'https://openrouter.ai/api/v1/chat/completions', model:'meta-llama/llama-3.3-70b-instruct:free' },
+    siliconflow: { url:'https://api.siliconflow.cn/v1/chat/completions', model:'Qwen/Qwen2.5-7B-Instruct' },
+    cerebras: { url:'https://api.cerebras.ai/v1/chat/completions', model:'llama-3.3-70b' },
+    mistral: { url:'https://api.mistral.ai/v1/chat/completions', model:'mistral-small-latest' }
+  };
+  if (presets[v]) {
+    document.getElementById('aiUrl').value = presets[v].url;
+    document.getElementById('aiModel').value = presets[v].model;
+    document.getElementById('aiKey').value = '';
+    document.getElementById('aiKey').placeholder = `请填入${v}的API Key`;
+  }
 }
 
 // ======== 知识自动更新系统 ========

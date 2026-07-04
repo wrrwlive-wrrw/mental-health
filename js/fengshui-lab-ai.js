@@ -22,11 +22,43 @@ async function fsLabAIAnalyze(tab, userMsg, imageData) {
   addFsLabMsg(tab, {role:'assistant', content:'<span class="fs-lab-loading">🔮 大师正在分析中...</span>'});
 
   // 读取API配置（与心理辅导模块共用同一套配置）
-  const apiKey = localStorage.getItem('mh_ai_key') || 'sk-fefqgtifrqqmjgclpeketqhcszaylmewsxbpamxyepxhgjxa';
-  const model = localStorage.getItem('mh_ai_model') || 'Qwen/Qwen3-8B';
-  const storedUrl = localStorage.getItem('mh_ai_url') || '';
-  // chat.js存的是完整url(含/chat/completions)，这里只要baseUrl
-  const baseUrl = storedUrl ? storedUrl.replace(/\/chat\/completions\/?$/, '') : 'https://api.siliconflow.cn/v1';
+  // 优先用户设置，否则尝试多个免费备选
+  const userKey = localStorage.getItem('mh_ai_key');
+  const userUrl = localStorage.getItem('mh_ai_url');
+  const userModel = localStorage.getItem('mh_ai_model');
+
+  // 免费API备选列表（无需信用卡，OpenAI兼容格式）
+  const FREE_APIS = [
+    { name:'Groq', baseUrl:'https://api.groq.com/openai/v1', model:'llama-3.3-70b-versatile', key:'gsk_free' },
+    { name:'OpenRouter', baseUrl:'https://openrouter.ai/api/v1', model:'meta-llama/llama-3.3-70b-instruct:free', key:'sk_free' },
+    { name:'Cerebras', baseUrl:'https://api.cerebras.ai/v1', model:'llama-3.3-70b', key:'csk_free' }
+  ];
+
+  let apiKey, baseUrl, model;
+  if (userKey && userKey.length > 10) {
+    apiKey = userKey;
+    baseUrl = userUrl ? userUrl.replace(/\/chat\/completions\/?$/, '') : 'https://api.siliconflow.cn/v1';
+    model = userModel || 'Qwen/Qwen3-8B';
+  } else {
+    // 使用Groq免费API（需要用户自己申请key，但注册免费无需信用卡）
+    apiKey = localStorage.getItem('mh_groq_key') || '';
+    baseUrl = 'https://api.groq.com/openai/v1';
+    model = 'llama-3.3-70b-versatile';
+    if (!apiKey) {
+      // 没有任何key，直接给离线结果+提示
+      const hArr = fsLabHistory[tab];
+      const tipMsg = `<b style="color:#c17817">🔑 需要配置AI接口</b><br><br>
+        请选择以下任一免费平台注册获取API Key（均无需信用卡）：<br>
+        <a href="https://console.groq.com" target="_blank" style="color:#667eea">① Groq（推荐·最快·1000次/天）</a><br>
+        <a href="https://openrouter.ai" target="_blank" style="color:#667eea">② OpenRouter（20+免费模型）</a><br>
+        <a href="https://cloud.siliconflow.cn" target="_blank" style="color:#667eea">③ SiliconFlow（国内·中文优化）</a><br><br>
+        获取Key后点击右下角 ⚙️ 填入即可。<br><br>
+        <b>离线分析：</b><br>${getFsLabFallback(tab, userMsg)}`;
+      if (hArr && hArr.length) hArr[hArr.length - 1] = {role:'assistant', content: tipMsg};
+      refreshFsLab(tab);
+      return;
+    }
+  }
 
   try {
     const resp = await fetch(`${baseUrl}/chat/completions`, {
