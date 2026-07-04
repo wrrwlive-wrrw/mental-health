@@ -23,6 +23,7 @@ function renderFengshui() {
         <br><span style="color:#c17817">※ 内容仅供传统文化学习与娱乐参考，请理性看待，不作重大决策依据。</span>
       </p>
     </div>
+    ${typeof renderFsUserInfoCard==='function'?renderFsUserInfoCard():''}
     <div class="fs-tabs" id="fsTabs">
       ${Object.entries(FENGSHUI_MODULES).map(([k,v])=>`
         <div class="fs-tab ${k===fengshuiCurrentTab?'active':''}" onclick="switchFsTab('${k}')">
@@ -55,12 +56,12 @@ function showFsTab(tab) {
   el.innerHTML = renderers[tab] ? renderers[tab]() : '<p>敬请期待</p>';
 }
 
-// 各二级模块的初始占位（后续通过edit逐个填充详细内容）
-function renderFsFengshui() { return getFengshuiFengshui(); }
-function renderFsXiangshu() { return getFengshuiXiangshu(); }
-function renderFsZiwei()    { return getFengshuiZiwei(); }
-function renderFsBazi()     { return getFengshuiBazi(); }
-function renderFsDivine()   { return getFengshuiDivine(); }
+// 各二级模块渲染（知识 + 互动分析）
+function renderFsFengshui() { return getFengshuiFengshui() + renderFsLab('fengshui'); }
+function renderFsXiangshu() { return getFengshuiXiangshu() + renderFsLab('xiangshu'); }
+function renderFsZiwei()    { return getFengshuiZiwei() + renderFsLab('ziwei'); }
+function renderFsBazi()     { return getFengshuiBazi() + renderFsLab('bazi'); }
+function renderFsDivine()   { return getFengshuiDivine() + renderFsLab('divine'); }
 
 // ========== 一、风水与择吉 ==========
 function getFengshuiFengshui() {

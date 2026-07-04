@@ -1,0 +1,186 @@
+/* 风水大师·个人信息与分析实验室样式 */
+
+/* ========== 用户信息卡片 ========== */
+.fs-user-card {
+  background: linear-gradient(135deg, #fef7e0 0%, #faf0d8 100%);
+  border: 1px solid #d4a574;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 10px 0 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.fs-user-empty {
+  background: #fef8ed;
+  border: 1px dashed #d4a574;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  margin: 10px 0 14px;
+  color: #8b6914;
+  font-size: 13px;
+}
+.fs-user-name { font-weight: bold; color: #8b4513; font-size: 15px; }
+.fs-user-meta { font-size: 12px; color: #7a5a2a; margin-top: 3px; line-height: 1.6; }
+.fs-user-actions { display: flex; gap: 6px; }
+.fs-btn-sm {
+  background: #c17817; color: #fff; border: none; border-radius: 5px;
+  padding: 5px 12px; font-size: 12px; cursor: pointer;
+}
+.fs-btn-sm:hover { background: #a56410; }
+.fs-btn-sm.secondary { background: #8b6914; }
+
+/* ========== 表单弹窗 ========== */
+.fs-modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; padding: 20px;
+}
+.fs-modal {
+  background: #fff; border-radius: 12px; max-width: 480px; width: 100%;
+  max-height: 90vh; overflow-y: auto; padding: 20px;
+}
+.fs-modal h3 { color: #8b4513; margin-bottom: 14px; text-align: center; }
+.fs-form-group { margin-bottom: 12px; }
+.fs-form-group label {
+  display: block; font-size: 13px; color: #5a4a2a; margin-bottom: 4px; font-weight: 600;
+}
+.fs-form-group input, .fs-form-group select {
+  width: 100%; padding: 8px 10px; border: 1px solid #d4a574;
+  border-radius: 6px; font-size: 13px; background: #fefcf7;
+}
+.fs-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fs-modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+.fs-modal-btns button {
+  flex: 1; padding: 10px; border: none; border-radius: 6px;
+  cursor: pointer; font-size: 14px; font-weight: 600;
+}
+.fs-btn-primary { background: #c17817; color: #fff; }
+.fs-btn-cancel { background: #e8dcc8; color: #5a4a2a; }
+
+/* ========== 分析实验室 ========== */
+.fs-lab {
+  background: #fefcf7; border: 2px solid #d4a574;
+  border-radius: 10px; padding: 14px; margin: 16px 0;
+}
+.fs-lab-title {
+  color: #8b4513; font-size: 15px; font-weight: bold;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.fs-lab-desc { font-size: 12px; color: #7a5a2a; margin-bottom: 12px; line-height: 1.6; }
+.fs-lab-toolbar {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.fs-lab-tool {
+  background: #fff; border: 1px solid #d4a574; border-radius: 6px;
+  padding: 6px 10px; font-size: 12px; color: #8b4513;
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.fs-lab-tool:hover { background: #fef7e0; }
+.fs-lab-tool.active { background: #c17817; color: #fff; }
+.fs-lab-input-area {
+  display: flex; gap: 6px; align-items: flex-end;
+}
+.fs-lab-input {
+  flex: 1; min-height: 60px; padding: 8px 10px;
+  border: 1px solid #d4a574; border-radius: 6px;
+  font-size: 13px; resize: vertical; background: #fff;
+}
+.fs-lab-send {
+  background: #c17817; color: #fff; border: none;
+  border-radius: 6px; padding: 10px 16px; cursor: pointer;
+  font-size: 13px; font-weight: 600;
+}
+.fs-lab-send:hover { background: #a56410; }
+
+/* 消息区 */
+.fs-lab-msgs {
+  background: #fff; border: 1px solid #e8dcc8; border-radius: 8px;
+  padding: 10px; max-height: 360px; overflow-y: auto;
+  min-height: 60px; margin-bottom: 10px;
+}
+.fs-lab-welcome {
+  text-align: center; color: #999; font-size: 12px; padding: 24px 10px;
+}
+.fs-lab-msg {
+  padding: 8px 12px; border-radius: 8px; margin: 6px 0;
+  font-size: 13px; line-height: 1.7; max-width: 90%; word-wrap: break-word;
+}
+.fs-lab-user {
+  background: #fef7e0; border: 1px solid #e8dcc8;
+  margin-left: auto; text-align: right;
+}
+.fs-lab-ai {
+  background: #faf6ef; border-left: 3px solid #c17817; color: #3a3020;
+}
+.fs-lab-img {
+  max-width: 180px; max-height: 180px; border-radius: 6px;
+  display: block; margin: 4px 0; border: 1px solid #d4a574;
+}
+.fs-lab-loading { color: #999; font-style: italic; }
+
+/* 输入行 */
+.fs-lab-input { margin-top: 10px; }
+.fs-lab-tools { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.fs-lab-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.fs-lab-row input[type="text"] {
+  flex: 1; padding: 9px 12px; border: 1px solid #d4a574;
+  border-radius: 6px; font-size: 13px; background: #fff;
+}
+.fs-lab-tts {
+  background: none; border: 1px solid #d4a574; border-radius: 6px;
+  padding: 8px 10px; cursor: pointer; font-size: 14px;
+}
+
+/* 表单弹窗(修复) */
+.fs-modal {
+  position: fixed; inset: 0; z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.fs-modal-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+}
+.fs-modal-box {
+  position: relative; background: #fff; border-radius: 12px;
+  max-width: 460px; width: 90%; max-height: 85vh; overflow-y: auto;
+  padding: 20px; z-index: 1;
+}
+.fs-modal-title { color: #8b4513; text-align: center; margin-bottom: 14px; }
+.fs-form-row { margin-bottom: 10px; }
+.fs-form-row label { display: block; font-size: 13px; color: #5a4a2a; margin-bottom: 3px; font-weight: 600; }
+.fs-form-row input, .fs-form-row select, .fs-form-row textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid #d4a574;
+  border-radius: 6px; font-size: 13px; background: #fefcf7; box-sizing: border-box;
+}
+.fs-form-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.fs-form-row2 label { display: block; font-size: 13px; color: #5a4a2a; margin-bottom: 3px; font-weight: 600; }
+.fs-form-row2 input, .fs-form-row2 select {
+  width: 100%; padding: 8px 10px; border: 1px solid #d4a574;
+  border-radius: 6px; font-size: 13px; background: #fefcf7; box-sizing: border-box;
+}
+.fs-form-actions { display: flex; gap: 10px; margin-top: 16px; }
+.fs-btn-cancel, .fs-btn-submit {
+  flex: 1; padding: 10px; border: none; border-radius: 6px;
+  cursor: pointer; font-size: 14px; font-weight: 600;
+}
+.fs-btn-cancel { background: #e8dcc8; color: #5a4a2a; }
+.fs-btn-submit { background: #c17817; color: #fff; }
+.fs-form-tip { font-size: 11px; color: #999; text-align: center; margin-top: 10px; }
+
+/* 用户tag */
+.fs-utag {
+  display: inline-block; background: #fff8e8; border: 1px solid #d4a574;
+  border-radius: 10px; padding: 2px 8px; font-size: 11px; color: #8b4513; margin: 2px 3px;
+}
+.fs-user-left { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.fs-user-edit-btn {
+  background: none; border: 1px solid #c17817; color: #c17817;
+  border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+}
+.fs-user-empty { cursor: pointer; }
+.fs-user-empty span { margin: 0 4px; }
