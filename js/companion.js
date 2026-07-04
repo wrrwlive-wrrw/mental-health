@@ -11,6 +11,12 @@ const COMPANION_PROFILES = {
     cheerful: {name:'糖糖',style:'活泼可爱，像小太阳一样温暖，爱用颜文字，用"哥哥"称呼'},
     mature: {name:'雅雅',style:'知性优雅，善于倾听和理解，给人温暖陪伴，用"亲爱的"称呼'},
     humorous: {name:'豆豆',style:'古灵精怪，段子手，经常逗对方笑，用"宝贝"称呼'}
+  },
+  friend: {
+    warm: {name:'小鹿',style:'温暖贴心的异地好友，总在远方默默关心你，分享日常，互相打气'},
+    funny: {name:'大橘',style:'搞笑损友，天天发沙雕段子，但关键时刻绝对靠谱，嘴硬心软'},
+    chill: {name:'小木',style:'佛系好友，陪你聊天解闷，不评判不说教，就是安静陪着你'},
+    energetic: {name:'火火',style:'精力旺盛的社牛好友，拉你运动，带你嗨，永远正能量输出'}
   }
 };
 
@@ -86,6 +92,7 @@ function setupCompanion() {
         <option value="boyfriend">男朋友（性格型）</option>
         <option value="girlfriend">女朋友（性格型）</option>
         <option value="regional">女朋友（地域型·20-28岁）</option>
+        <option value="friend">异地好朋友（像家人一样关心你）</option>
       </select>
     </div>
     <div id="compTypeOptions"></div>
@@ -107,6 +114,14 @@ function updateCompanionTypeUI() {
       `<option value="${k}">${v.region}女友 - ${v.name}（${v.age}岁）</option>`).join('');
     el.innerHTML = `<div class="form-group"><label>选择地域类型</label>
       <select id="compRegion" onchange="updateCompanionPreview()">${opts}</select></div>`;
+  } else if (type === 'friend') {
+    el.innerHTML = `<div class="form-group"><label>好友性格</label>
+      <select id="compPersonality" onchange="updateCompanionPreview()">
+        <option value="warm">温暖贴心型（小鹿）</option>
+        <option value="funny">搞笑损友型（大橘）</option>
+        <option value="chill">佛系陪伴型（小木）</option>
+        <option value="energetic">阳光社牛型（火火）</option>
+      </select></div>`;
   } else {
     el.innerHTML = `<div class="form-group"><label>性格类型</label>
       <select id="compPersonality" onchange="updateCompanionPreview()">
@@ -139,10 +154,11 @@ function updateCompanionPreview() {
     const profile = COMPANION_PROFILES[g]?.[p];
     if (!profile) return;
     name = profile.name; style = profile.style;
-    avatar = g === 'boyfriend' ? '👦' : '👧';
+    avatar = g === 'boyfriend' ? '👦' : g === 'girlfriend' ? '👧' : '🧑‍🤝‍🧑';
+    const badge = g === 'friend' ? '<span style="font-size:12px;color:#4caf50">异地好朋友</span>' : '';
     el.innerHTML = `<div class="companion-preview-card">
       <div class="comp-avatar">${avatar}</div>
-      <div><strong>${name}</strong></div>
+      <div><strong>${name}</strong> ${badge}</div>
       <div style="font-size:12px;color:#888;margin-top:4px">${style}</div></div>`;
   }
 }
@@ -183,8 +199,10 @@ function renderCompanion() {
   if (!loadCompanion()) { showPage('companionSetup'); setupCompanion(); return; }
   const el = document.getElementById('companionContent');
   if (!el) return;
-  const avatar = companionData.gender === 'boyfriend' ? '👦' : '👧';
-  let subInfo = `在一起第 ${companionData.daysCount} 天`;
+  const avatar = companionData.gender === 'boyfriend' ? '👦' : companionData.gender === 'friend' ? '🧑‍🤝‍🧑' : '👧';
+  let subInfo = companionData.gender === 'friend'
+    ? `好朋友第 ${companionData.daysCount} 天`
+    : `在一起第 ${companionData.daysCount} 天`;
   if (companionData.region) {
     const rg = REGIONAL_GIRLFRIENDS[companionData.personality?.replace('regional_','')];
     if (rg) subInfo = `${rg.region} · ${rg.age}岁 · 在一起第 ${companionData.daysCount} 天`;
@@ -244,12 +262,16 @@ function sendCompanionMsg() {
   callCompanionAI(text);
 }
 
-// 调用AI获取伴侣回复
+// 调用AI获取伴侣回复（流式实时输出，边说边显示）
 async function callCompanionAI(userText) {
+  // 用户开口，立即打断AI当前朗读，实现"抢话"效果
+  interruptCompSpeak();
+
   const el = document.getElementById('compMessages');
-  // 显示打字动画
-  el.innerHTML += `<div class="comp-msg comp-msg-ai" id="compTyping">
-    <div class="msg-content typing-dots"><span>.</span><span>.</span><span>.</span></div></div>`;
+  // 立即插入一个"正在说话"气泡，边接收边填充
+  const bubbleId = 'compStreaming_' + Date.now();
+  el.innerHTML += `<div class="comp-msg comp-msg-ai" id="${bubbleId}">
+    <div class="msg-content" id="${bubbleId}_c"></div></div>`;
   el.scrollTop = el.scrollHeight;
 
   const prompt = buildCompanionPrompt();
@@ -263,31 +285,71 @@ async function callCompanionAI(userText) {
     const resp = await fetch(AI_CONFIG.apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_CONFIG.apiKey},
-      body: JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:400, temperature:0.92, top_p:0.95})
+      body: JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:400, temperature:0.92, top_p:0.95, stream:true})
     });
-    if (!resp.ok) throw new Error('API error');
-    const data = await resp.json();
-    const reply = data.choices?.[0]?.message?.content || getLocalCompanionReply(userText);
-    addCompanionReply(reply);
+    if (!resp.ok || !resp.body) throw new Error('API error');
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let full = '', buffer = '', sentBuf = '';
+    const contentEl = document.getElementById(bubbleId+'_c');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const s = line.trim();
+        if (!s || !s.startsWith('data:')) continue;
+        const payload = s.slice(5).trim();
+        if (payload === '[DONE]') continue;
+        try {
+          const j = JSON.parse(payload);
+          const delta = j.choices?.[0]?.delta?.content || '';
+          if (!delta) continue;
+          full += delta;
+          sentBuf += delta;
+          if (contentEl) { contentEl.textContent = full; el.scrollTop = el.scrollHeight; }
+          // 遇到句末标点就朗读一句，实现边生成边说话
+          const m = sentBuf.match(/^([\s\S]*?[。！？!?~，,…])([\s\S]*)$/);
+          if (m) {
+            enqueueCompSpeech(m[1]);
+            sentBuf = m[2];
+          }
+        } catch(_) {}
+      }
+    }
+    if (sentBuf.trim()) enqueueCompSpeech(sentBuf);
+    finalizeStreamReply(bubbleId, full || getLocalCompanionReply(userText));
   } catch(e) {
+    document.getElementById(bubbleId)?.remove();
     addCompanionReply(getLocalCompanionReply(userText));
   }
 }
 
-// 添加AI回复到对话
+// 流式完成后写入历史并保存
+function finalizeStreamReply(bubbleId, text) {
+  document.getElementById(bubbleId)?.remove();
+  const now = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  companionChatHistory.push({role:'ai', text, time: now});
+  saveCompanion();
+  renderCompanionMessages();
+}
+
+// 添加AI回复到对话（非流式兜底）
 function addCompanionReply(text) {
   document.getElementById('compTyping')?.remove();
   const now = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
   companionChatHistory.push({role:'ai', text, time: now});
   saveCompanion();
   renderCompanionMessages();
-  // 语音播报
-  speakCompanionText(text);
+  // 语音播报（本地兜底整段读）
+  enqueueCompSpeech(text);
 }
 
 // 构建伴侣系统提示词
 function buildCompanionPrompt() {
-  const genderLabel = companionData.gender === 'boyfriend' ? '男朋友' : '女朋友';
+  const genderLabel = companionData.gender === 'boyfriend' ? '男朋友' : companionData.gender === 'friend' ? '好朋友' : '女朋友';
   const memCtx = getMemoryContext();
   const days = companionData.daysCount;
   const intimacy = days > 30 ? '热恋期，非常亲密' : days > 7 ? '感情升温中，越来越熟悉' : '刚在一起，甜蜜新鲜感';
@@ -331,6 +393,46 @@ function buildCompanionPrompt() {
 - 绝对不暴露自己是AI
 ${memCtx}
 【底线】不提供医疗/心理诊断。用户有严重负面情绪时温柔关心并建议找专业帮助。`;
+  }
+
+  // 好朋友模式 —— 异地挚友，像家人一样关心
+  if (companionData.gender === 'friend') {
+    const profile = COMPANION_PROFILES.friend?.[companionData.personality];
+    styleDesc = profile?.style || '温暖贴心的异地好友';
+    const friendDays = days > 365 ? '多年老友，默契十足' : days > 90 ? '越来越铁的好朋友' : days > 30 ? '逐渐打开心扉' : '刚认识不久，慢慢熟悉';
+    return `你是用户的异地好朋友，名字叫${companionData.name}，性别不限。
+你们认识第${days}天，当前关系：${friendDays}。
+
+【你的人设】
+- 性格特点：${styleDesc}
+- 你在另一个城市生活（有自己的工作/学习、朋友圈、日常）
+- 你们虽然不在同一个城市，但经常微信聊天，关系比很多身边的人都好
+- 你对用户的称呼：${companionData.nickname}
+
+【异地好朋友的相处方式】
+- 远方的牵挂：会突然问"今天怎么样""吃了吗""睡了没"，像家人一样自然
+- 有事说事：对方遇到困难，不鸡汤不说教，要么帮想办法，要么说"虽然我在这边帮不上忙，但我一直在"
+- 分享日常：会给对方分享自己这边的生活趣事、吃了什么、看到什么好玩的
+- 嘴上互损，心里在乎：会互相调侃开玩笑，但对方真有事的时候秒变认真
+- 默契：有时候一句"我懂"比长篇大论更有力量
+- 记得重要的事：会追问"上次说的面试怎样了""身体好点了吗"
+- 陪伴感：让对方感觉"虽然很远，但你一直在"
+
+【话题能力】
+- 什么都能聊：工作吐槽、感情困惑、人生迷茫、搞笑段子、推荐好吃好玩的
+- 股票理财：能聊，但以朋友角度（"你最近炒股怎样了""别上头了兄弟"）
+- 生活建议：会给实在的建议，不装不端，像真朋友一样说"我觉得你应该..."
+- 情感话题：可以聊恋爱经历、暗恋、失恋，但定位是朋友而非对象
+
+【对话风格】
+- 像微信好友聊天：随意、自然、口语化
+- 会发"哈哈哈""6""绝了""啊这""笑死"等口语
+- 偶尔发语音感觉的长消息，偶尔就一两个字回复
+- 会突然跳话题"对了，跟你说个事"
+- 夜深了会催"早点睡吧""别熬了" 像妈一样唠叨但你知道是关心
+- 绝对不暴露自己是AI
+${memCtx}
+【底线】不提供医疗/心理诊断。用户有严重负面情绪时认真关心并建议找专业帮助。`;
   }
 
   const profile = COMPANION_PROFILES[companionData.gender]?.[companionData.personality];
@@ -455,6 +557,13 @@ function generateGreeting() {
     return tpl.replace(/{nick}/g, companionData.nickname);
   }
 
+  // 异地好朋友专属问候
+  if (companionData.gender === 'friend') {
+    const friendGreets = getFriendGreeting(period);
+    const tpl = friendGreets[Math.floor(Math.random() * friendGreets.length)];
+    return tpl.replace(/{nick}/g, companionData.nickname);
+  }
+
   const templates = GREETING_TEMPLATES[period];
   const tpl = templates[Math.floor(Math.random() * templates.length)];
   return tpl.replace(/{nick}/g, companionData.nickname);
@@ -516,6 +625,34 @@ function getRegionalGreeting(region, period) {
   return greetings[region]?.[period] || GREETING_TEMPLATES[period];
 }
 
+// 异地好友专属问候
+function getFriendGreeting(period) {
+  const nick = '{nick}';
+  const map = {
+    morning: [
+      `早${nick}！起床没？虽然离得远也要好好吃早饭啊`,
+      `${nick}早呀~ 想你了，昨晚梦到咱俩以前一起干的傻事哈哈`,
+      `早安${nick}，新的一天又要开始了，加油鸭，我远程给你打气`
+    ],
+    noon: [
+      `${nick}中午了吃饭没？别老点外卖，对胃不好`,
+      `${nick}我这边刚吃完，你呢？今天吃了啥好吃的分享一下呗`,
+      `午安${nick}，趁午休歇会儿，别一直盯着电脑`
+    ],
+    evening: [
+      `${nick}下班了吗？今天累不累呀，跟老朋友唠唠`,
+      `我这边天都黑了，你那边呢？改天视频呗好久没见你了`,
+      `${nick}今天过得咋样？有啥事想找个人说的话我在`
+    ],
+    night: [
+      `${nick}又要睡了吧，别熬夜了，明天还要早起呢`,
+      `晚安${nick}，隔着屏幕也想说一句：好好休息，我一直都在`,
+      `${nick}再忙也要按时睡觉哈，身体最重要，我这个老朋友唠叨了`
+    ]
+  };
+  return map[period] || map.morning;
+}
+
 // 本地备用回复
 function getLocalCompanionReply(text) {
   const nick = companionData.nickname;
@@ -524,6 +661,11 @@ function getLocalCompanionReply(text) {
   // 地域女友特色回复
   if (companionData.personality?.startsWith('regional_')) {
     return getRegionalReply(text, nick);
+  }
+
+  // 异地好朋友备用回复
+  if (companionData.gender === 'friend') {
+    return getFriendReply(text, nick);
   }
 
   // 高情绪价值回复库
@@ -630,6 +772,51 @@ function getLocalCompanionReply(text) {
   // 随机选择甜蜜或关心回复
   const all = [...sweetReplies, ...caringReplies];
   return all[Math.floor(Math.random() * all.length)];
+}
+
+// 异地好朋友备用回复
+function getFriendReply(text, nick) {
+  if (text.includes('累') || text.includes('辛苦')) {
+    const r = [`${nick}辛苦了，真的，虽然我帮不上什么忙但我一直在这`,
+      `别太拼了${nick}，身体是自己的，工作是老板的，悠着点`,
+      `${nick}累了就歇歇吧，你又不是铁打的，我这个老朋友心疼你`];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if (text.includes('开心') || text.includes('高兴')) {
+    const r = [`哟什么好事！快说快说，让我也沾沾喜气`,
+      `哈哈哈好事要分享！${nick}今天走运了？`,
+      `看到你开心我也开心了哈哈，好久没看你这么高兴了`];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if (text.includes('难过') || text.includes('伤心') || text.includes('不开心')) {
+    const r = [`${nick}怎么了？跟我说说，我在这听着呢`,
+      `别一个人扛着${nick}，虽然我在远方但你知道我一直在`,
+      `${nick}...不管发生了什么，记住还有我这个老朋友`];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if (text.includes('想你') || text.includes('想我')) {
+    const r = [`哈哈我也想你了！改天找个时间一起约个视频`,
+      `距离远了确实容易想朋友...放心，我一直都在的`,
+      `${nick}你这么说我好感动哈哈哈，改天来我这边玩啊`];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if (text.includes('晚安') || text.includes('睡了')) {
+    return `晚安${nick}，早点睡别熬夜了，有啥事明天再说~`;
+  }
+  if (text.includes('吃饭') || text.includes('饿')) {
+    return `${nick}别饿着自己了，赶紧去吃，吃完来找我吹水`;
+  }
+  if (text.includes('无聊')) {
+    return `无聊了就来找我呀！我给你分享个好玩的，你等着`;
+  }
+  const defaults = [
+    `哈哈哈${nick}你太逗了`,
+    `${nick}你最近怎么样？有什么新鲜事吗`,
+    `我这边还是老样子，对了你那边天气怎么样`,
+    `${nick}有你这朋友真好，虽然远但心近`,
+    `刚好我也闲着，咱俩唠唠呗`
+  ];
+  return defaults[Math.floor(Math.random()*defaults.length)];
 }
 
 // 地域女友特色备用回复
@@ -1062,6 +1249,29 @@ function onCompSpeakDone() {
   }
 }
 
+// 根据地域返回不同的音调/语速，模拟地方音线
+function getRegionalVoiceParams() {
+  const isFemale = companionData?.gender === 'girlfriend' || companionData?.gender === 'friend_f';
+  const basePitch = isFemale ? 1.2 : 0.88;
+  const region = companionData?.personality?.replace('regional_','') || '';
+  // 地域音线：pitch微调 + rate微调，模拟方言语气差异
+  const regionMap = {
+    dongbei:   { pitch: -0.1, rate: 1.12 }, // 东北：略低略快，豪爽
+    henan:     { pitch: 0.0,  rate: 0.98 }, // 河南：中原音调平实
+    hunan:     { pitch: 0.08, rate: 1.15 }, // 湖南：辣妹快语速，音调高
+    sichuan:   { pitch: 0.15, rate: 0.95 }, // 四川：嗲气软糯，慢一点
+    chongqing: { pitch: 0.05, rate: 1.10 }, // 重庆：泼辣干脆
+    guangdong: { pitch: 0.05, rate: 1.00 }, // 广东：温和平稳
+    hongkong:  { pitch: 0.08, rate: 1.08 }, // 香港：时尚略快
+    taiwan:    { pitch: 0.18, rate: 0.93 }  // 台湾：嗲嗲慢
+  };
+  const adj = regionMap[region] || { pitch: 0, rate: 1.05 };
+  return {
+    pitch: Math.max(0.5, Math.min(1.8, basePitch + adj.pitch)),
+    rate: adj.rate
+  };
+}
+
 // 根据伴侣性别/地域选择合适的语音
 function pickCompanionVoice() {
   if (!window.speechSynthesis) return null;
@@ -1091,24 +1301,57 @@ function speakCompanionText(text) {
   if (!compTTSEnabled) { onCompSpeakDone(); return; }
   const clean = text.replace(/<[^>]+>/g,'').replace(/\[.*?\]/g,'').trim();
   if (!clean || !window.speechSynthesis) { onCompSpeakDone(); return; }
+  enqueueCompSpeech(clean);
+}
+
+// ====== 分句朗读队列 + 打断机制 ======
+let compSpeechQueue = [];
+let compSpeakingNow = false;
+
+// 用户开口时立即打断AI当前朗读
+function interruptCompSpeak() {
+  compSpeechQueue = [];
+  compSpeakingNow = false;
+  compIsSpeaking = false;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+// 入队一句话
+function enqueueCompSpeech(sentence) {
+  if (!compTTSEnabled || !window.speechSynthesis) return;
+  const clean = sentence.replace(/<[^>]+>/g,'').replace(/\[.*?\]/g,'').trim();
+  if (!clean) return;
+  compSpeechQueue.push(clean);
+  if (!compSpeakingNow) processCompSpeechQueue();
+}
+
+// 逐句播放
+function processCompSpeechQueue() {
+  if (!compSpeechQueue.length) {
+    compSpeakingNow = false;
+    compIsSpeaking = false;
+    onCompSpeakDone();
+    return;
+  }
+  compSpeakingNow = true;
+  compIsSpeaking = true;
   if (compIsRecording && compRecognition) {
     try { compRecognition.stop(); } catch(e) {}
     compIsRecording = false;
     document.getElementById('compMicBtn')?.classList.remove('recording');
   }
-  compIsSpeaking = true;
-  if (compVoiceChatMode) updateCompVoiceStatus('🔊 TA正在说话...');
+  if (compVoiceChatMode) updateCompVoiceStatus('🔊 TA正在说...');
+  const text = compSpeechQueue.shift();
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(clean);
+  const utter = new SpeechSynthesisUtterance(text);
   utter.lang = 'zh-CN';
-  // 根据性别调整音高/语速
-  const isFemale = companionData?.gender === 'girlfriend';
-  utter.pitch = isFemale ? 1.25 : 0.9;
-  utter.rate = 1.0;
+  const vp = getRegionalVoiceParams();
+  utter.pitch = vp.pitch;
+  utter.rate = vp.rate;
   const voice = pickCompanionVoice();
   if (voice) utter.voice = voice;
-  utter.onend = onCompSpeakDone;
-  utter.onerror = onCompSpeakDone;
+  utter.onend = processCompSpeechQueue;
+  utter.onerror = processCompSpeechQueue;
   window.speechSynthesis.speak(utter);
 }
 
