@@ -61,8 +61,8 @@ function getFsAgentWelcome() {
 function getFsQuickQuestions() {
   const qs = {
     interpret: ['分析我的八字格局','我的五行缺什么','我的命中贵人方位','十神看性格特点'],
-    guide: ['今年事业运如何','感情运势分析','财运方向建议','健康注意事项'],
-    solution: ['事业遇到瓶颈怎么办','如何改善人际关系','最近总失眠怎么调','搬家选什么方位好']
+    guide: ['今年事业运如何','感情运势分析','财运方向建议','结合健康记录分析体质'],
+    solution: ['事业遇到瓶颈怎么办','如何改善人际关系','根据我的健康记录给养生建议','搬家选什么方位好']
   };
   return qs[fsAgentMode] || [];
 }
@@ -130,8 +130,22 @@ function getFsAgentPrompt() {
   const user = typeof getFsUserInfo==='function' ? getFsUserInfo() : null;
   let userInfo = '';
   if (user) {
-    userInfo = `\n【用户信息】姓名：${user.name||'未知'}，性别：${user.gender||'未知'}，出生：${user.birthDate||'未知'} ${user.birthHour||''}时，生肖：${user.zodiac||''}，年柱：${user.yearGanZhi||''}，五行：${user.yearWuxing||''}`;
+    const wuxing = (user.yearPillar && user.yearPillar.wuxing) || '';
+    const ganZhi = (user.yearPillar && user.yearPillar.gan && user.yearPillar.zhi) ? user.yearPillar.gan + user.yearPillar.zhi : '';
+    userInfo = `\n【用户信息】姓名：${user.name||'未知'}，性别：${user.gender||'未知'}，出生：${user.birthDate||'未知'} ${user.birthTime||''}时，生肖：${user.zodiac||''}，年柱：${ganZhi}，五行：${wuxing}`;
   }
+
+  // 获取健康档案人员和记录
+  let healthInfo = '';
+  if (typeof getFsPersonsSummary === 'function') {
+    const personsSummary = getFsPersonsSummary();
+    if (personsSummary) healthInfo += `\n【健康档案人员】${personsSummary}`;
+  }
+  if (typeof getFsHealthSummary === 'function') {
+    const healthSummary = getFsHealthSummary();
+    if (healthSummary) healthInfo += `\n【近期健康记录】\n${healthSummary}`;
+  }
+
   const modePrompts = {
     interpret: '当前模式：命理解读。请详细分析用户的命理格局，包括八字结构、五行旺衰、十神配置、格局高低、大运走势。',
     guide: '当前模式：运势指导。请结合用户命理信息分析当前运势，提供具体的事业、感情、健康等方面指导建议，指出需要注意的时间节点。',
@@ -146,14 +160,16 @@ function getFsAgentPrompt() {
 
 ${modePrompts[fsAgentMode]||''}
 ${userInfo}
+${healthInfo}
 
 【回答原则】
 1. 引经据典，展现专业性
 2. 条理清晰，分点论述
 3. 给出具体可操作的建议
-4. 语气温和有智慧，像一位阅历丰富的老师
-5. 适当提醒"仅供参考，重大决策需综合考虑"
-6. 如用户未提供出生信息，主动询问`;
+4. 当用户询问健康相关问题时，主动结合健康档案记录进行分析，从五行体质角度给出调理建议
+5. 语气温和有智慧，像一位阅历丰富的老师
+6. 适当提醒"仅供参考，重大决策需综合考虑"
+7. 如用户未提供出生信息，主动询问`;
 }
 
 function getFsAgentFallback(msg) {
