@@ -8,6 +8,7 @@ const FENGSHUI_MODULES = {
   ziwei:    { name:'紫微斗数', icon:'✨', desc:'紫微斗数十四主星命盘解读' },
   bazi:     { name:'四柱八字', icon:'📜', desc:'渊海子平、滴天髓，天干地支论命' },
   divine:   { name:'占卜', icon:'🎴', desc:'易经六十四卦、玉匣记宜忌' },
+  yangsheng:{ name:'房中养生', icon:'🧘', desc:'黄帝内经、道家养生、精气神调养' },
   business: { name:'经商', icon:'💰', desc:'商道智慧、财运分析、生意利弊' },
   official: { name:'做官', icon:'🏛️', desc:'仕途运势、官运分析、进退之道' }
 };
@@ -54,6 +55,7 @@ function showFsTab(tab) {
     ziwei:    renderFsZiwei,
     bazi:     renderFsBazi,
     divine:   renderFsDivine,
+    yangsheng:renderFsYangsheng,
     business: renderFsBusiness,
     official: renderFsOfficial
   };
@@ -66,6 +68,7 @@ function renderFsXiangshu() { return getFengshuiXiangshu() + renderFsLab('xiangs
 function renderFsZiwei()    { return getFengshuiZiwei() + renderFsLab('ziwei'); }
 function renderFsBazi()     { return getFengshuiBazi() + renderFsLab('bazi'); }
 function renderFsDivine()   { return getFengshuiDivine() + renderFsLab('divine'); }
+function renderFsYangsheng(){ return getFengshuiYangsheng() + renderFsLab('yangsheng'); }
 function renderFsBusiness() { return getFengshuiBusiness() + renderFsLab('business'); }
 function renderFsOfficial() { return getFengshuiOfficial() + renderFsLab('official'); }
 
