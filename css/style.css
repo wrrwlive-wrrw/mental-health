@@ -825,6 +825,49 @@ body {
   border-radius: 20px; font-size: 14px; outline: none;
 }
 .comp-input-area input:focus { border-color: #e91e63; }
+
+/* ==== 伴侣语音交互 ==== */
+.comp-voice-bar {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; margin:10px 0;
+  background:linear-gradient(135deg,#fff5f8,#ffe0ec);
+  border-radius:14px;
+}
+.btn-comp-voice-chat {
+  padding:8px 16px; background:linear-gradient(135deg,#ff6b9d,#e91e63);
+  color:#fff; border:none; border-radius:20px; font-size:13px;
+  cursor:pointer; font-weight:600;
+  box-shadow:0 2px 8px rgba(233,30,99,0.3); transition:all .2s;
+}
+.btn-comp-voice-chat:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(233,30,99,0.4); }
+.btn-comp-voice-chat.voice-chat-active {
+  background:linear-gradient(135deg,#4caf50,#2e7d32);
+  animation: compPulse 1.5s infinite;
+}
+@keyframes compPulse {
+  0%,100% { box-shadow:0 2px 8px rgba(76,175,80,0.4); }
+  50% { box-shadow:0 2px 20px rgba(76,175,80,0.7); }
+}
+.comp-voice-tip { font-size:12px; color:#c2185b; }
+.btn-comp-mic, .btn-comp-tts {
+  background:#fff; border:2px solid #fce4ec; border-radius:50%;
+  width:40px; height:40px; cursor:pointer; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.btn-comp-mic:hover, .btn-comp-tts:hover { border-color:#e91e63; background:#fff5f8; }
+.btn-comp-mic.recording {
+  background:#ffebee; border-color:#f44336;
+  animation: compRec 1s infinite;
+}
+@keyframes compRec {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.08); }
+}
+.comp-voice-status {
+  text-align:center; font-size:12px; color:#c2185b;
+  margin:6px 0; min-height:16px;
+}
 .comp-actions {
   display: flex; justify-content: center; gap: 16px;
   margin-top: 12px; padding-top: 10px; border-top: 1px solid #fce4ec;

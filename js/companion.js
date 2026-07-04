@@ -196,15 +196,23 @@ function renderCompanion() {
       <div class="comp-days">${subInfo}</div>
     </div>
     <div class="comp-messages" id="compMessages"></div>
+    <div class="comp-voice-bar">
+      <button class="btn-comp-voice-chat" id="compVoiceChatBtn" onclick="toggleCompVoiceChat()">🎙️ 开启语音对话</button>
+      <span class="comp-voice-tip" id="compVoiceTip">像真人一样自由聊天</span>
+    </div>
     <div class="comp-input-area">
       <input type="text" id="compInput" placeholder="说点什么吧..."
         onkeypress="if(event.key==='Enter')sendCompanionMsg()">
+      <button class="btn-comp-mic" id="compMicBtn" onclick="toggleCompVoiceInput()" title="按下说话">🎤</button>
+      <button class="btn-comp-tts" id="compTTSBtn" onclick="toggleCompTTS()" title="AI语音回复">🔊</button>
       <button class="btn btn-primary btn-send" onclick="sendCompanionMsg()">发送</button>
     </div>
+    <div class="comp-voice-status" id="compVoiceStatus"></div>
     <div class="comp-actions">
       <button class="btn-link" onclick="resetCompanion()">重新选择伴侣</button>
       <button class="btn-link" onclick="showPage('home')">返回首页</button>
     </div>`;
+  initCompVoice();
   renderCompanionMessages();
   checkDailyGreeting();
 }
@@ -273,6 +281,8 @@ function addCompanionReply(text) {
   companionChatHistory.push({role:'ai', text, time: now});
   saveCompanion();
   renderCompanionMessages();
+  // 语音播报
+  speakCompanionText(text);
 }
 
 // 构建伴侣系统提示词
@@ -896,4 +906,214 @@ function getEmotionCareReply(intensity, text) {
     return replies[Math.floor(Math.random()*replies.length)];
   }
   return null; // light 和 normal 用常规回复
+}
+
+// ========== 伴侣语音对话系统 ==========
+let compRecognition = null;
+let compIsRecording = false;
+let compIsSpeaking = false;
+let compVoiceChatMode = false;
+let compTTSEnabled = localStorage.getItem('mh_comp_tts') !== 'off';
+let compVoiceMethod = 'web'; // web / manual
+
+function initCompVoice() {
+  const ttsBtn = document.getElementById('compTTSBtn');
+  if (ttsBtn) ttsBtn.textContent = compTTSEnabled ? '🔊' : '🔇';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { compVoiceMethod = 'manual'; return; }
+  compRecognition = new SR();
+  compRecognition.lang = 'zh-CN';
+  compRecognition.continuous = false;
+  compRecognition.interimResults = true;
+  compRecognition.maxAlternatives = 1;
+  compRecognition.onstart = () => {
+    compIsRecording = true;
+    document.getElementById('compMicBtn')?.classList.add('recording');
+  };
+  compRecognition.onresult = (e) => {
+    let t = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    const input = document.getElementById('compInput');
+    if (input) input.value = t;
+    if (e.results[e.results.length-1].isFinal) {
+      if (compVoiceChatMode) updateCompVoiceStatus('🤔 TA在想怎么回你...');
+      setTimeout(() => { if (t.trim()) sendCompanionMsg(); }, 200);
+    }
+  };
+  compRecognition.onend = () => {
+    compIsRecording = false;
+    document.getElementById('compMicBtn')?.classList.remove('recording');
+  };
+  compRecognition.onerror = (e) => {
+    compIsRecording = false;
+    document.getElementById('compMicBtn')?.classList.remove('recording');
+    if (e.error === 'no-speech' && compVoiceChatMode) {
+      updateCompVoiceStatus('🟢 没听到声音，再试一次~');
+      setTimeout(compStartListening, 500);
+    } else if (e.error === 'not-allowed') {
+      updateCompVoiceStatus('⚠️ 麦克风权限被拒绝');
+      compSwitchToManual();
+    } else if (e.error === 'network') {
+      updateCompVoiceStatus('⚠️ 语音服务不可用，已切换为文字+AI语音回复模式');
+      compSwitchToManual();
+    } else if (e.error !== 'aborted') {
+      updateCompVoiceStatus('⚠️ 识别出错：' + e.error);
+    }
+  };
+}
+
+function updateCompVoiceStatus(msg) {
+  const el = document.getElementById('compVoiceStatus');
+  if (el) el.textContent = msg;
+}
+
+function compSwitchToManual() {
+  compVoiceMethod = 'manual';
+  if (compVoiceChatMode) {
+    const btn = document.getElementById('compVoiceChatBtn');
+    if (btn) btn.textContent = '💬 连续对话中...';
+    updateCompVoiceStatus('✅ 请打字聊天，TA会用语音回你');
+    document.getElementById('compInput')?.focus();
+  }
+}
+
+function toggleCompTTS() {
+  compTTSEnabled = !compTTSEnabled;
+  localStorage.setItem('mh_comp_tts', compTTSEnabled ? 'on' : 'off');
+  const btn = document.getElementById('compTTSBtn');
+  if (btn) btn.textContent = compTTSEnabled ? '🔊' : '🔇';
+  if (!compTTSEnabled && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+function toggleCompVoiceInput() {
+  if (!compRecognition) initCompVoice();
+  if (!compRecognition) {
+    updateCompVoiceStatus('⚠️ 当前浏览器不支持语音输入，请手动输入');
+    return;
+  }
+  if (compIsRecording) {
+    try { compRecognition.stop(); } catch(e) {}
+    compIsRecording = false;
+  } else {
+    try {
+      compRecognition.start();
+      updateCompVoiceStatus('🟢 请说话...');
+    } catch(e) {}
+  }
+}
+
+function toggleCompVoiceChat() {
+  compVoiceChatMode = !compVoiceChatMode;
+  const btn = document.getElementById('compVoiceChatBtn');
+  if (compVoiceChatMode) {
+    compTTSEnabled = true;
+    localStorage.setItem('mh_comp_tts', 'on');
+    const ttsBtn = document.getElementById('compTTSBtn');
+    if (ttsBtn) ttsBtn.textContent = '🔊';
+    if (compVoiceMethod === 'web' && compRecognition) {
+      if (btn) { btn.classList.add('voice-chat-active'); btn.textContent = '🎙️ 连续对话中...'; }
+      updateCompVoiceStatus('🟢 语音对话已开启，直接说话即可~');
+      compStartListening();
+    } else {
+      if (btn) { btn.classList.add('voice-chat-active'); btn.textContent = '💬 连续对话中...'; }
+      updateCompVoiceStatus('✅ 输入文字回车发送，TA会用语音回你');
+      document.getElementById('compInput')?.focus();
+    }
+  } else {
+    compStopVoiceChat();
+    if (btn) { btn.classList.remove('voice-chat-active'); btn.textContent = '🎙️ 开启语音对话'; }
+  }
+}
+
+function compStopVoiceChat() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  compIsSpeaking = false;
+  if (compIsRecording && compRecognition) {
+    try { compRecognition.stop(); } catch(e) {}
+    compIsRecording = false;
+  }
+  document.getElementById('compMicBtn')?.classList.remove('recording');
+  updateCompVoiceStatus('');
+}
+
+function compStartListening() {
+  if (!compVoiceChatMode || compVoiceMethod !== 'web') return;
+  if (!compRecognition) initCompVoice();
+  if (!compRecognition || compIsRecording || compIsSpeaking) return;
+  try {
+    compRecognition.start();
+    compIsRecording = true;
+    document.getElementById('compMicBtn')?.classList.add('recording');
+    updateCompVoiceStatus('🟢 正在聆听...请说话');
+  } catch(e) {
+    setTimeout(() => { if (compVoiceChatMode && !compIsRecording) compStartListening(); }, 1000);
+  }
+}
+
+function onCompSpeakDone() {
+  compIsSpeaking = false;
+  if (!compVoiceChatMode) return;
+  if (compVoiceMethod === 'web' && compRecognition) {
+    updateCompVoiceStatus('🟢 请继续说话...');
+    setTimeout(compStartListening, 600);
+  } else {
+    updateCompVoiceStatus('✅ 请继续输入...');
+    document.getElementById('compInput')?.focus();
+  }
+}
+
+// 根据伴侣性别/地域选择合适的语音
+function pickCompanionVoice() {
+  if (!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoices = voices.filter(v => v.lang && v.lang.includes('zh'));
+  if (!zhVoices.length) return null;
+  const isFemale = companionData?.gender === 'girlfriend';
+  const region = companionData?.personality?.replace('regional_','');
+  // 港/台/粤 优先尝试 zh-HK / zh-TW
+  if (region === 'hongkong' || region === 'guangdong') {
+    const hk = zhVoices.find(v => v.lang.includes('HK') || v.lang.includes('yue'));
+    if (hk) return hk;
+  }
+  if (region === 'taiwan') {
+    const tw = zhVoices.find(v => v.lang.includes('TW'));
+    if (tw) return tw;
+  }
+  // 根据性别匹配 name 里的关键词
+  const femaleKw = ['Female','Xiaoyi','Xiaoxiao','Yaoyao','Tracy','HanHan','Yating','Ting'];
+  const maleKw = ['Male','Kangkang','Yunyang','Yunxi','Danny'];
+  const target = isFemale ? femaleKw : maleKw;
+  const matched = zhVoices.find(v => target.some(k => (v.name||'').includes(k)));
+  return matched || zhVoices[0];
+}
+
+function speakCompanionText(text) {
+  if (!compTTSEnabled) { onCompSpeakDone(); return; }
+  const clean = text.replace(/<[^>]+>/g,'').replace(/\[.*?\]/g,'').trim();
+  if (!clean || !window.speechSynthesis) { onCompSpeakDone(); return; }
+  if (compIsRecording && compRecognition) {
+    try { compRecognition.stop(); } catch(e) {}
+    compIsRecording = false;
+    document.getElementById('compMicBtn')?.classList.remove('recording');
+  }
+  compIsSpeaking = true;
+  if (compVoiceChatMode) updateCompVoiceStatus('🔊 TA正在说话...');
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'zh-CN';
+  // 根据性别调整音高/语速
+  const isFemale = companionData?.gender === 'girlfriend';
+  utter.pitch = isFemale ? 1.25 : 0.9;
+  utter.rate = 1.0;
+  const voice = pickCompanionVoice();
+  if (voice) utter.voice = voice;
+  utter.onend = onCompSpeakDone;
+  utter.onerror = onCompSpeakDone;
+  window.speechSynthesis.speak(utter);
+}
+
+// 让 voices 列表在浏览器异步加载后就绪
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
