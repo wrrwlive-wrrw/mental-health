@@ -199,6 +199,16 @@
             </div>
           </div>
 
+          <div class="feature-card" onclick="showPage('fengshui');renderFengshui()">
+            <div class="feature-icon">🧿</div>
+            <h3 class="feature-title">风水大师</h3>
+            <p class="feature-desc">易经、三命通会、渊海子平、滴天髓、紫微斗数、麻衣神相、玉匣记等古籍智慧，涵盖风水择吉、相术、紫微斗数、四柱八字、占卜五大板块</p>
+            <div class="feature-tags">
+              <span class="tag tag-orange">传统文化</span>
+              <span class="tag tag-purple">5大板块</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- 评估说明 -->
@@ -352,6 +362,15 @@
       </div>
     </div>
 
+    <!-- 风水大师页 -->
+    <div id="fengshui" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#8b6914;margin-bottom:20px">🧿 风水大师</h2>
+        <div id="fengshuiContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
     <!-- 流派知识图谱页 -->
     <div id="knowledgeGraph" class="page">
       <div class="card">
@@ -390,6 +409,7 @@
   <script src="js/stress-relief.js"></script>
   <script src="js/psy-knowledge.js"></script>
   <script src="js/hotline.js"></script>
+  <script src="js/fengshui.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
