@@ -839,3 +839,202 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 24px; margin: 0 auto 8px;
 }
+
+/* ========== 减压工具箱 ========== */
+.sr-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.sr-tab {
+  padding:8px 14px; border:2px solid #e0e0e0; background:#fff;
+  border-radius:20px; cursor:pointer; font-size:13px; color:#666;
+  transition:all 0.2s;
+}
+.sr-tab:hover { border-color:#667eea; color:#667eea; }
+.sr-tab.active { background:#667eea; color:#fff; border-color:#667eea; }
+.sr-section h3 { color:#4a4a8a; margin-bottom:10px; font-size:18px; }
+.sr-intro { color:#666; font-size:13px; margin-bottom:16px;
+  padding:10px 14px; background:#f0f4ff; border-radius:8px;
+  border-left:3px solid #667eea; }
+.sr-exercise-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+}
+.sr-card {
+  background:#fff; border:1px solid #e8e8f0; border-radius:12px;
+  padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+  transition:transform 0.2s;
+}
+.sr-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(102,126,234,0.15); }
+.sr-card h4 { color:#4a4a8a; margin-bottom:8px; font-size:15px; }
+.sr-steps { color:#e91e63; font-size:13px; margin-bottom:6px; font-weight:600; }
+.sr-desc { color:#666; font-size:13px; line-height:1.6; margin-bottom:10px; }
+.sr-guide { font-size:13px; color:#555; margin-top:8px; }
+.sr-guide ol, .sr-guide ul { padding-left:20px; margin:6px 0; }
+.sr-guide li { margin:4px 0; line-height:1.7; }
+.sr-quote {
+  margin-top:8px; padding:8px 10px; background:#faf5ff;
+  border-left:3px solid #764ba2; font-style:italic;
+  color:#764ba2; font-size:12px;
+}
+.breath-timer-area { margin-top:24px; }
+.breath-runner { text-align:center; padding:20px;
+  background:linear-gradient(135deg,#e0f7fa,#f3e5f5); border-radius:16px; }
+.breath-circle {
+  width:180px; height:180px; border-radius:50%;
+  background:radial-gradient(circle,#81d4fa,#4fc3f7);
+  margin:20px auto; display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:20px; font-weight:600;
+  transition:transform 1s ease-in-out;
+}
+.breath-circle.inhale { transform:scale(1.3); background:radial-gradient(circle,#a5d6a7,#66bb6a); }
+.breath-circle.exhale { transform:scale(0.8); background:radial-gradient(circle,#ffab91,#ff7043); }
+.breath-circle.hold { transform:scale(1.1); background:radial-gradient(circle,#ffd54f,#ffb300); }
+.breath-count { font-size:48px; font-weight:700; color:#4a4a8a; }
+.breath-progress { color:#666; margin:8px 0 16px; font-size:13px; }
+.breath-done { text-align:center; padding:30px; background:#e8f5e9;
+  border-radius:12px; color:#2e7d32; font-size:16px; }
+
+/* ========== 心理知识库 ========== */
+.pk-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.pk-tab {
+  padding:8px 14px; border:2px solid #e0e0e0; background:#fff;
+  border-radius:20px; cursor:pointer; font-size:13px; color:#666;
+}
+.pk-tab.active { background:#764ba2; color:#fff; border-color:#764ba2; }
+.pk-section h3 { color:#4a4a8a; margin-bottom:10px; font-size:18px; }
+.pk-intro { color:#666; font-size:13px; margin-bottom:16px;
+  padding:10px 14px; background:#faf5ff; border-radius:8px;
+  border-left:3px solid #764ba2; }
+.pk-topic-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:14px;
+}
+.pk-card {
+  background:#fff; border:1px solid #e8e8f0; border-radius:12px;
+  padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+.pk-card h4 { color:#764ba2; margin-bottom:10px; font-size:15px;
+  border-bottom:1px solid #f0e6ff; padding-bottom:6px; }
+.pk-card p, .pk-card li { font-size:13px; color:#555; line-height:1.7; }
+.pk-card ul, .pk-card ol { padding-left:20px; margin:6px 0; }
+.pk-tag {
+  display:inline-block; padding:2px 8px; border-radius:10px;
+  font-size:11px; margin-right:4px;
+}
+.pk-tag-red { background:#ffebee; color:#c62828; }
+.pk-tag-green { background:#e8f5e9; color:#2e7d32; }
+.pk-tag-blue { background:#e3f2fd; color:#1565c0; }
+.pk-warn {
+  padding:10px 14px; background:#fff3e0; border-left:3px solid #ff9800;
+  border-radius:6px; margin-top:10px; font-size:12px; color:#e65100;
+}
+
+/* ========== 24小时求助热线 ========== */
+.hl-alert {
+  background:linear-gradient(135deg,#ffcdd2,#f8bbd0);
+  border-radius:12px; padding:16px; margin-bottom:16px;
+  text-align:center; color:#c2185b;
+}
+.hl-alert h3 { font-size:16px; margin-bottom:6px; }
+.hl-alert p { font-size:13px; line-height:1.6; }
+.hl-section { margin-bottom:24px; }
+.hl-section h3 { color:#e91e63; margin-bottom:12px; font-size:17px;
+  padding-bottom:6px; border-bottom:2px solid #fce4ec; }
+.hl-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:12px;
+}
+.hl-card {
+  background:#fff; border:1px solid #fce4ec; border-radius:12px;
+  padding:14px; box-shadow:0 2px 8px rgba(233,30,99,0.06);
+  display:flex; flex-direction:column; gap:6px;
+}
+.hl-card.emergency { border-color:#ef5350; background:#fff5f5; }
+.hl-card h4 { color:#4a4a8a; font-size:14px; }
+.hl-phone {
+  font-size:20px; font-weight:700; color:#e91e63;
+  letter-spacing:1px; margin:4px 0;
+}
+.hl-phone a { color:#e91e63; text-decoration:none; }
+.hl-phone a:hover { text-decoration:underline; }
+.hl-time { font-size:12px; color:#666; }
+.hl-desc { font-size:12px; color:#888; line-height:1.6; }
+.hl-tag {
+  display:inline-block; padding:2px 8px; border-radius:10px;
+  font-size:11px; background:#f3e5f5; color:#7b1fa2;
+  margin-right:4px; align-self:flex-start;
+}
+.hl-tag.free { background:#e8f5e9; color:#2e7d32; }
+.hl-tag.h24 { background:#ffebee; color:#c62828; }
+.hl-tip {
+  padding:12px 14px; background:#fff9c4; border-left:3px solid #fbc02d;
+  border-radius:6px; margin-top:10px; font-size:12px; color:#795548;
+  line-height:1.7;
+}
+
+/* 热线 - 补充样式 */
+.hotline-emergency {
+  background:linear-gradient(135deg,#ffcdd2,#ef9a9a); border-radius:14px;
+  padding:24px; text-align:center; margin-bottom:20px;
+}
+.emergency-title { font-size:20px; font-weight:700; color:#c62828; margin-bottom:6px; }
+.emergency-desc { font-size:13px; color:#b71c1c; margin-bottom:14px; }
+.emergency-btn {
+  display:inline-block; padding:12px 28px; background:#d32f2f; color:#fff;
+  border-radius:30px; font-size:18px; font-weight:700; text-decoration:none;
+  margin:6px 8px; box-shadow:0 3px 12px rgba(211,47,47,0.3);
+}
+.emergency-btn:hover { background:#b71c1c; }
+.hotline-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.hl-tab {
+  padding:8px 14px; border:2px solid #fce4ec; background:#fff;
+  border-radius:20px; cursor:pointer; font-size:13px; color:#666;
+}
+.hl-tab:hover { border-color:#e91e63; color:#e91e63; }
+.hl-tab.active { background:#e91e63; color:#fff; border-color:#e91e63; }
+.hl-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; }
+.hl-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.hl-card-header h4 { font-size:14px; color:#333; }
+.hl-card-body { display:flex; align-items:center; gap:12px; }
+.hl-tel {
+  font-size:18px; font-weight:700; color:#e91e63; text-decoration:none;
+  letter-spacing:0.5px;
+}
+.hl-tel:hover { text-decoration:underline; }
+.hl-org { font-size:12px; color:#888; }
+.hl-intro { font-size:13px; color:#666; margin-bottom:14px; }
+.hl-time { font-size:11px; color:#fff; background:#667eea; padding:2px 8px; border-radius:10px; }
+.hl-city-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.hl-city-card {
+  background:#fff; border:1px solid #fce4ec; border-radius:10px;
+  padding:12px; text-align:center;
+}
+.hl-city-card h4 { color:#e91e63; font-size:14px; margin-bottom:6px; }
+.hl-online-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+.hl-online-card {
+  background:#fff; border:1px solid #e8e8f0; border-radius:10px; padding:14px;
+}
+.hl-online-card h4 { color:#764ba2; margin-bottom:6px; font-size:14px; }
+.hl-online-card p { font-size:12px; color:#666; margin-bottom:4px; }
+.hl-url { color:#667eea; font-weight:600; font-size:12px; }
+.hl-guide-content { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+.hl-guide-card {
+  background:#fff; border:1px solid #f0e6ff; border-radius:12px; padding:16px;
+}
+.hl-guide-card h4 { color:#764ba2; margin-bottom:10px; font-size:14px; }
+.hl-guide-card ul, .hl-guide-card ol { padding-left:20px; }
+.hl-guide-card li { font-size:13px; color:#555; line-height:1.8; margin:4px 0; }
+
+/* 心理知识库 - 补充样式 */
+.pk-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+.pk-section h3 { color:#4a4a8a; margin-bottom:12px; }
+.pk-myth { border-left:3px solid #ef5350; }
+.pk-truth { color:#2e7d32; margin-top:8px; font-size:13px; font-weight:500; }
+.pk-danger { border-left:3px solid #d32f2f; background:#fff5f5; }
+.pk-warning { border-left:3px solid #ff9800; background:#fff8e1; }
+.pk-notice { border-left:3px solid #2196f3; background:#e3f2fd; }
+.pk-action { margin-top:10px; font-weight:700; color:#e91e63; font-size:13px; }
+.pk-bystander {
+  margin-top:16px; padding:16px; background:#e8f5e9; border-radius:12px;
+}
+.pk-bystander h4 { color:#2e7d32; margin-bottom:10px; }
+.pk-bystander ol { padding-left:20px; }
+.pk-bystander li { font-size:13px; line-height:1.8; margin:4px 0; color:#333; }

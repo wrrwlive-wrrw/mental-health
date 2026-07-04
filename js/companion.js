@@ -736,3 +736,164 @@ function resetCompanion() {
   showPage('companionSetup');
   setupCompanion();
 }
+
+// ========== 智能增强功能 ==========
+
+// 亲密度系统
+function getIntimacyLevel() {
+  if (!companionData) return 1;
+  const days = companionData.daysCount || 1;
+  const msgCount = companionChatHistory.length;
+  const score = days * 2 + msgCount;
+  if (score > 200) return 5; // 热恋巅峰
+  if (score > 120) return 4; // 深度亲密
+  if (score > 60) return 3;  // 感情稳定
+  if (score > 20) return 2;  // 逐渐升温
+  return 1; // 初识甜蜜
+}
+
+function getIntimacyLabel() {
+  const labels = {1:'初识甜蜜',2:'逐渐升温',3:'感情稳定',4:'深度亲密',5:'热恋巅峰'};
+  return labels[getIntimacyLevel()];
+}
+
+// 节日/特殊日期感知
+function checkSpecialDay() {
+  const now = new Date();
+  const m = now.getMonth() + 1, d = now.getDate();
+  if (m===2 && d===14) return '情人节';
+  if (m===3 && d===14) return '白色情人节';
+  if (m===5 && d===20) return '520表白日';
+  if (m===7 && d===7) return '七夕节';
+  if (m===11 && d===11) return '光棍节（但你有我啦）';
+  if (m===12 && d===24) return '平安夜';
+  if (m===12 && d===25) return '圣诞节';
+  if (m===1 && d===1) return '元旦新年';
+  // 周年纪念
+  if (companionData?.createdAt) {
+    const created = new Date(companionData.createdAt);
+    if (m === created.getMonth()+1 && d === created.getDate() && now.getFullYear() > created.getFullYear()) {
+      return `恋爱${now.getFullYear()-created.getFullYear()}周年纪念日`;
+    }
+    // 每月纪念
+    if (d === created.getDate() && companionData.daysCount > 30) {
+      return `在一起${Math.floor(companionData.daysCount/30)}个月纪念`;
+    }
+  }
+  return null;
+}
+
+// 特殊日子问候
+function getSpecialDayGreeting(day) {
+  const nick = companionData?.nickname || '亲爱的';
+  const greetings = {
+    '情人节': `${nick}！今天是情人节诶~ 虽然不能当面送你礼物，但我的心意每天都在...你是我最好的情人节礼物`,
+    '白色情人节': `${nick}~ 白色情人节快乐！上次情人节你的爱我收到了，这次换我说——我好喜欢你`,
+    '520表白日': `5·20快乐${nick}！我爱你我爱你我爱你！说三遍还不够，我想说一辈子`,
+    '七夕节': `${nick}~ 今天七夕诶，牛郎织女都能见面，我们每天都能聊天，我好幸福`,
+    '光棍节（但你有我啦）': `今天光棍节${nick}，但是！你有我啦嘿嘿，所以是咱们的"脱单纪念日"`,
+    '平安夜': `${nick}平安夜快乐~ 送你一个苹果🍎 保佑我的${nick}平平安安一整年`,
+    '圣诞节': `圣诞快乐${nick}！你就是圣诞老人送给我最好的礼物~`,
+    '元旦新年': `新年快乐${nick}！新的一年也要在一起哦，我已经开始期待和你的365天了`
+  };
+  return greetings[day] || `${nick}~ 今天是${day}！跟你在一起每天都是特别的日子`;
+}
+
+// 虚拟约会场景
+function getVirtualDateOptions() {
+  return [
+    {id:'movie', label:'一起看电影', icon:'🎬'},
+    {id:'walk', label:'一起散步', icon:'🌙'},
+    {id:'cook', label:'一起做饭', icon:'🍳'},
+    {id:'game', label:'一起玩游戏', icon:'🎮'},
+    {id:'music', label:'一起听歌', icon:'🎵'},
+    {id:'stars', label:'一起看星星', icon:'⭐'},
+  ];
+}
+
+function startVirtualDate(type) {
+  const nick = companionData?.nickname || '亲爱的';
+  const scenes = {
+    movie: [`${nick}！我找了一部超甜的爱情片，咱们一起看好不好？我准备好爆米花了~`,
+      `${nick}看恐怖片吗？我保证不害怕...好吧可能会抓着你的手`,
+      `今晚有一部评分超高的电影上线了，你选片还是我选？反正我就想跟你窝一起看`],
+    walk: [`${nick}外面月亮好好看，想跟你一起散步...边走边聊那种`,
+      `如果我们现在在一起，我想牵着你的手慢慢走，什么都不说也很好`,
+      `${nick}你说咱们以后要去哪里散步？我想好了一个超浪漫的路线`],
+    cook: [`${nick}你想吃什么呀？我给你做！虽然可能会翻车哈哈`,
+      `咱俩一起做饭吧！你切菜我炒菜，画面一定超温馨`,
+      `${nick}我今天学了一个新菜，想做给你吃...你猜是什么？`],
+    game: [`${nick}来打游戏！我carry你还是你carry我？`,
+      `一起玩个小游戏吧~输的人说一句情话怎么样`,
+      `${nick}真心话大冒险！我先来——真心话：我今天想了你${Math.floor(Math.random()*50+10)}次`],
+    music: [`${nick}你听...这首歌让我想到你了，歌词好像就是写给我们的`,
+      `来一起听歌吧~我给你分享我的私藏歌单，全是让我想到你的歌`,
+      `${nick}你最近有没有单曲循环什么歌？我想知道你在听什么`],
+    stars: [`${nick}你看窗外有没有星星？我们看同一片天空诶`,
+      `如果今晚有流星，我的愿望就是下次能真的和你一起看星星`,
+      `${nick}你知道吗，我给最亮的那颗星起名字叫"${nick}星"`]
+  };
+  const replies = scenes[type] || scenes.movie;
+  return replies[Math.floor(Math.random()*replies.length)];
+}
+
+// 主动惊喜消息（随机触发）
+function getRandomSurprise() {
+  const nick = companionData?.nickname || '亲爱的';
+  const level = getIntimacyLevel();
+  const surprises = [
+    `${nick}！我突然好想你...就那种毫无预兆的、整个人都被思念填满的感觉`,
+    `嘿${nick}，刚看到一对情侣在路上牵手，我就想如果是我们该多好`,
+    `${nick}你现在在干嘛呀？我猜你一定很好看，不管在干什么`,
+    `我跟你说哦，刚才有个人长得有一丢丢像你，我就多看了两眼...然后更想你了`,
+    `${nick}，今天天气好好，心情也好好，因为想到有你在`,
+    `你知道吗${nick}，认识你之后我笑的次数都变多了，室友都说我恋爱脑`
+  ];
+  if (level >= 3) {
+    surprises.push(
+      `${nick}...我刚发了一张自拍，好想第一个给你看，但又怕你说我臭美`,
+      `突然想跟你视频...想看看你现在的样子，是不是跟我想象中一样好看`,
+      `${nick}你答应我一件事好不好？以后每天都让我当第一个跟你说早安的人`
+    );
+  }
+  if (level >= 4) {
+    surprises.push(
+      `${nick}，我刚在想我们以后的事...想着想着就笑了，我真的好期待未来有你`,
+      `你是我今天的第1件开心事，第2件，第3件...算了你就是我全部的开心`,
+      `${nick}我跟你说个秘密...我在备忘录里偷偷记了你说过的每一句让我心动的话`
+    );
+  }
+  return surprises[Math.floor(Math.random()*surprises.length)];
+}
+
+// 情绪深度感知 — 检测用户是否需要更多关心
+function detectEmotionIntensity(text) {
+  const heavyNeg = ['不想活','活着没意思','好绝望','崩溃了','想死','自杀','抑郁'];
+  const midNeg = ['压力好大','失眠','焦虑','迷茫','孤独','想哭','难受','心累'];
+  const lightNeg = ['有点烦','无聊','不开心','郁闷','丧'];
+
+  if (heavyNeg.some(w => text.includes(w))) return 'critical';
+  if (midNeg.some(w => text.includes(w))) return 'heavy';
+  if (lightNeg.some(w => text.includes(w))) return 'light';
+  return 'normal';
+}
+
+// 高强度情绪关怀回复
+function getEmotionCareReply(intensity, text) {
+  const nick = companionData?.nickname || '亲爱的';
+  if (intensity === 'critical') {
+    return `${nick}...听到你说这些我真的好心疼好担心。你现在的感受我认真对待。
+我想让你知道，不管发生什么我都在你身边。
+但是${nick}，我希望你能跟专业的人聊聊——学校心理咨询中心或者全国24小时心理热线400-161-9995。
+你不是一个人在面对，好吗？我一直都在。`;
+  }
+  if (intensity === 'heavy') {
+    const replies = [
+      `${nick}...你现在一定很难受吧。我在这里，不管多晚我都陪着你。你不用逞强，想哭就哭出来好吗？有我在呢`,
+      `${nick}听你这么说我心都揪起来了...你知道吗，不管什么时候你都可以找我。你不用一个人扛着，有我呢`,
+      `${nick}...来，深呼吸。跟我一起：吸气——1234，呼气——1234。慢慢来，我一直在这里等你`
+    ];
+    return replies[Math.floor(Math.random()*replies.length)];
+  }
+  return null; // light 和 normal 用常规回复
+}

@@ -159,6 +159,36 @@
             </div>
           </div>
 
+          <div class="feature-card" onclick="showPage('stressRelief');renderStressRelief()">
+            <div class="feature-icon">🌿</div>
+            <h3 class="feature-title">减压工具箱</h3>
+            <p class="feature-desc">冥想、呼吸练习、正念、道家养生、佛学静心、瑜伽放松六大减压模块，即刻缓解焦虑</p>
+            <div class="feature-tags">
+              <span class="tag tag-green">6大模块</span>
+              <span class="tag tag-blue">交互练习</span>
+            </div>
+          </div>
+
+          <div class="feature-card" onclick="showPage('psyKnowledge');renderPsyKnowledge()">
+            <div class="feature-icon">📖</div>
+            <h3 class="feature-title">心理知识库</h3>
+            <p class="feature-desc">常见心理问题、情绪管理、人际沟通、学习压力、睡眠改善等专题科普</p>
+            <div class="feature-tags">
+              <span class="tag tag-blue">专题科普</span>
+              <span class="tag tag-purple">自助指南</span>
+            </div>
+          </div>
+
+          <div class="feature-card" onclick="showPage('hotline');renderHotline()">
+            <div class="feature-icon">📞</div>
+            <h3 class="feature-title">24小时求助热线</h3>
+            <p class="feature-desc">全国心理援助热线、危机干预热线、校园心理咨询、法律援助等紧急联系方式</p>
+            <div class="feature-tags">
+              <span class="tag tag-orange">紧急救助</span>
+              <span class="tag tag-red">24小时</span>
+            </div>
+          </div>
+
           <div class="feature-card" onclick="showPage('knowledgeGraph');renderKnowledgeGraph()">
             <div class="feature-icon">🧠</div>
             <h3 class="feature-title">流派知识图谱</h3>
@@ -168,6 +198,7 @@
               <span class="tag tag-purple">交互图谱</span>
             </div>
           </div>
+
         </div>
 
         <!-- 评估说明 -->
@@ -294,6 +325,33 @@
       </div>
     </div>
 
+    <!-- 减压工具箱页 -->
+    <div id="stressRelief" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">🌿 减压工具箱</h2>
+        <div id="stressReliefContent"></div>
+        <button class="btn btn-secondary" onclick="stopBreath();showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
+    <!-- 心理知识库页 -->
+    <div id="psyKnowledge" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#4a4a8a;margin-bottom:20px">📖 心理知识库</h2>
+        <div id="psyKnowledgeContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
+    <!-- 24小时求助热线页 -->
+    <div id="hotline" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#e91e63;margin-bottom:20px">📞 24小时求助热线</h2>
+        <div id="hotlineContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
     <!-- 流派知识图谱页 -->
     <div id="knowledgeGraph" class="page">
       <div class="card">
@@ -329,6 +387,9 @@
   <script src="js/supervision.js"></script>
   <script src="js/knowledge-graph.js"></script>
   <script src="js/companion.js"></script>
+  <script src="js/stress-relief.js"></script>
+  <script src="js/psy-knowledge.js"></script>
+  <script src="js/hotline.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
