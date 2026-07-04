@@ -2,6 +2,7 @@
 const TCM_MODULES = {
   consultation: { name:'智能问诊', icon:'🩺', desc:'望闻问切四诊合参，AI辨证分析' },
   prescription: { name:'处方开方', icon:'📝', desc:'辨证施治，中药方剂建议' },
+  rxIdentify:   { name:'药方识别', icon:'🔍', desc:'输入药方反推可治疾病' },
   patient:      { name:'健康档案', icon:'📋', desc:'病人信息管理，诊疗历史' },
   cases:        { name:'经典医案', icon:'📚', desc:'名老中医医案参考' },
   knowledge:    { name:'中医典籍', icon:'📖', desc:'黄帝内经、伤寒论要义' },
@@ -53,6 +54,7 @@ function showTcmTab(tab) {
   const renderers = {
     consultation: renderTcmConsultation,
     prescription: renderTcmPrescription,
+    rxIdentify: renderTcmRxIdentify,
     patient: renderTcmPatientList,
     cases: renderTcmCases,
     knowledge: renderTcmKnowledge,

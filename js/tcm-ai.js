@@ -17,6 +17,7 @@ async function tcmCallAI(type, userMsg, imageData) {
     case 'syndrome': sysPrompt = getTcmSyndromePrompt(patientInfo, userMsg); break;
     case 'prescription': sysPrompt = getTcmPrescriptionPrompt(patientInfo, userMsg); break;
     case 'drugguide': sysPrompt = getTcmDrugPrompt(); break;
+    case 'rxIdentify': sysPrompt = getTcmRxIdentifyPrompt(); break;
     default: sysPrompt = getTcmBasePrompt();
   }
 
