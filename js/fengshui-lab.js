@@ -33,6 +33,7 @@ function renderFsLab(tab) {
             onkeypress="if(event.key==='Enter')fsLabSend('${tab}')">
           <button class="fs-lab-send" onclick="fsLabSend('${tab}')">发送</button>
           <button class="fs-lab-tts" onclick="fsLabToggleTTS()" title="语音播报">🔊</button>
+          <button class="fs-lab-tts" onclick="showAISettings()" title="API设置" style="font-size:11px">⚙️</button>
         </div>
       </div>
     </div>`;

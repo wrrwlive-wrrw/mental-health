@@ -21,10 +21,12 @@ async function fsLabAIAnalyze(tab, userMsg, imageData) {
   // 加载态
   addFsLabMsg(tab, {role:'assistant', content:'<span class="fs-lab-loading">🔮 大师正在分析中...</span>'});
 
-  const settings = JSON.parse(localStorage.getItem('mh_ai_settings') || '{}');
-  const apiKey = settings.apiKey || 'sk-fefqgtifrqqmjgclpeketqhcszaylmewsxbpamxyepxhgjxa';
-  const model = settings.model || 'Qwen/Qwen3-8B';
-  const baseUrl = settings.baseUrl || 'https://api.siliconflow.cn/v1';
+  // 读取API配置（与心理辅导模块共用同一套配置）
+  const apiKey = localStorage.getItem('mh_ai_key') || 'sk-fefqgtifrqqmjgclpeketqhcszaylmewsxbpamxyepxhgjxa';
+  const model = localStorage.getItem('mh_ai_model') || 'Qwen/Qwen3-8B';
+  const storedUrl = localStorage.getItem('mh_ai_url') || '';
+  // chat.js存的是完整url(含/chat/completions)，这里只要baseUrl
+  const baseUrl = storedUrl ? storedUrl.replace(/\/chat\/completions\/?$/, '') : 'https://api.siliconflow.cn/v1';
 
   try {
     const resp = await fetch(`${baseUrl}/chat/completions`, {
@@ -60,7 +62,9 @@ async function fsLabAIAnalyze(tab, userMsg, imageData) {
   } catch(e) {
     console.error('风水AI分析错误:', e);
     const hArr = fsLabHistory[tab];
-    const errMsg = `<span style="color:#c17817">⚠️ AI连接失败，已切换为离线分析</span><br><br>${getFsLabFallback(tab, userMsg)}`;
+    const isKeyError = e.message && (e.message.includes('invalid') || e.message.includes('401') || e.message.includes('403'));
+    const keyTip = isKeyError ? '<br><br><b>🔑 解决方法：</b>请到首页→AI智能心理辅导→API设置中填入有效的API Key。<br>免费申请：<a href="https://cloud.siliconflow.cn" target="_blank" style="color:#667eea">SiliconFlow(免费)</a> 注册后获取Key即可。' : '';
+    const errMsg = `<span style="color:#c17817">⚠️ AI连接失败${isKeyError?'(API Key无效)':''}</span>${keyTip}<br><br>${getFsLabFallback(tab, userMsg)}`;
     if (hArr && hArr.length) hArr[hArr.length - 1] = {role:'assistant', content: errMsg};
     refreshFsLab(tab);
   }
