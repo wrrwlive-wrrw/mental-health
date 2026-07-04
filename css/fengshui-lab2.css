@@ -86,3 +86,18 @@
   color: #8b4513; font-size: 13px; margin-bottom: 4px;
   border-bottom: 1px dashed #d4a574; padding-bottom: 3px;
 }
+
+/* 摄像头模块 */
+.fs-camera-wrap {
+  border-radius: 8px; overflow: hidden; margin-bottom: 10px;
+  background: #000; max-height: 360px;
+}
+.fs-camera-wrap video { display: block; width: 100%; }
+.fs-camera-preview { text-align: center; }
+.fs-camera-actions {
+  display: flex; gap: 8px; justify-content: center; margin-top: 10px;
+}
+.fs-camera-opts {
+  display: flex; gap: 12px; align-items: center;
+  justify-content: center; margin-top: 10px;
+}

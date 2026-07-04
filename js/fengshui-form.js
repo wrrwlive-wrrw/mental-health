@@ -28,18 +28,18 @@ function getFsUserFormHTML(u) {
           <label>出生时辰</label>
           <select id="fsuBirthTime">
             <option value="">未知</option>
-            <option ${u.birthTime==='子'?'selected':''}>子(23-1点)</option>
-            <option ${u.birthTime==='丑'?'selected':''}>丑(1-3点)</option>
-            <option ${u.birthTime==='寅'?'selected':''}>寅(3-5点)</option>
-            <option ${u.birthTime==='卯'?'selected':''}>卯(5-7点)</option>
-            <option ${u.birthTime==='辰'?'selected':''}>辰(7-9点)</option>
-            <option ${u.birthTime==='巳'?'selected':''}>巳(9-11点)</option>
-            <option ${u.birthTime==='午'?'selected':''}>午(11-13点)</option>
-            <option ${u.birthTime==='未'?'selected':''}>未(13-15点)</option>
-            <option ${u.birthTime==='申'?'selected':''}>申(15-17点)</option>
-            <option ${u.birthTime==='酉'?'selected':''}>酉(17-19点)</option>
-            <option ${u.birthTime==='戌'?'selected':''}>戌(19-21点)</option>
-            <option ${u.birthTime==='亥'?'selected':''}>亥(21-23点)</option>
+            <option value="子" ${u.birthTime==='子'?'selected':''}>子(23-1点)</option>
+            <option value="丑" ${u.birthTime==='丑'?'selected':''}>丑(1-3点)</option>
+            <option value="寅" ${u.birthTime==='寅'?'selected':''}>寅(3-5点)</option>
+            <option value="卯" ${u.birthTime==='卯'?'selected':''}>卯(5-7点)</option>
+            <option value="辰" ${u.birthTime==='辰'?'selected':''}>辰(7-9点)</option>
+            <option value="巳" ${u.birthTime==='巳'?'selected':''}>巳(9-11点)</option>
+            <option value="午" ${u.birthTime==='午'?'selected':''}>午(11-13点)</option>
+            <option value="未" ${u.birthTime==='未'?'selected':''}>未(13-15点)</option>
+            <option value="申" ${u.birthTime==='申'?'selected':''}>申(15-17点)</option>
+            <option value="酉" ${u.birthTime==='酉'?'selected':''}>酉(17-19点)</option>
+            <option value="戌" ${u.birthTime==='戌'?'selected':''}>戌(19-21点)</option>
+            <option value="亥" ${u.birthTime==='亥'?'selected':''}>亥(21-23点)</option>
           </select>
         </div>
         <div>
@@ -61,7 +61,7 @@ function getFsUserFormHTML(u) {
           <select id="fsuOrient">
             <option value="">未知</option>
             ${['东','东南','南','西南','西','西北','北','东北'].map(d=>
-              `<option ${u.orientation===d?'selected':''}>${d}</option>`).join('')}
+              `<option value="${d}" ${u.orientation===d?'selected':''}>${d}</option>`).join('')}
           </select>
         </div>
       </div>

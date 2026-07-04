@@ -23,6 +23,7 @@ function renderFsLab(tab) {
           <label class="fs-lab-tool" title="上传图片">
             📷<input type="file" accept="image/*" onchange="fsLabUpload(event,'${tab}')" hidden>
           </label>
+          <button class="fs-lab-tool" onclick="fsOpenCamera('${tab}')" title="摄像头拍照">📹</button>
           <button class="fs-lab-tool" onclick="fsLabVoiceInput('${tab}')" title="语音输入">🎤</button>
           <button class="fs-lab-tool" onclick="fsLabLocation('${tab}')" title="获取位置">📍</button>
           ${tab==='divine'?'<button class="fs-lab-tool fs-lab-divine-btn" onclick="fsLabDivine(\''+tab+'\')">🎴 起卦</button>':''}
