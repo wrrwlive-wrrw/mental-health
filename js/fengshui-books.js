@@ -58,6 +58,12 @@ function renderFsBookDetail(bookId) {
       <p style="font-size:12px;font-weight:bold;color:#283593;margin:0 0 6px">🎓 高校课程讲座推荐：</p>
       ${b.lectures.map(l=>`<p style="font-size:12px;color:#333;margin:0 0 4px;line-height:1.6">• <b>${l.teacher}</b>（${l.school}）：${l.course}${l.note?' — '+l.note:''}</p>`).join('')}
     </div>`:''}
+    ${FS_BOOKS_CASES&&FS_BOOKS_CASES[bookId]?`<div style="background:#fff8e1;padding:10px;border-radius:6px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:bold;color:#e65100;margin:0 0 6px">📋 从古至今应用案例（${FS_BOOKS_CASES[bookId].length}例）：</p>
+      <div style="max-height:200px;overflow-y:auto">
+        ${FS_BOOKS_CASES[bookId].map(c=>`<p style="font-size:12px;color:#333;margin:0 0 4px;line-height:1.6">• <b>[${c.era}]</b> ${c.title}：${c.desc}</p>`).join('')}
+      </div>
+    </div>`:''}
     <h5 style="color:#8b6914;margin:12px 0 8px">章节目录（点击阅读原文+白话对照）</h5>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
       ${b.chapters.map((c,i) =>
