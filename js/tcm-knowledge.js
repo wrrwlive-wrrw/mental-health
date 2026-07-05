@@ -18,20 +18,72 @@ function showTcmKnowPanel(p) {
 }
 
 function renderTcmClassics() {
-  const classics = [
-    {name:'《黄帝内经》',era:'战国~西汉',content:'中医学奠基之作。分《素问》《灵枢》各81篇。确立阴阳五行、脏腑经络、病因病机、诊法治则等基本理论。"正气存内，邪不可干"、"治未病"思想影响深远。'},
-    {name:'《难经》',era:'东汉',content:'以问答形式阐述81个医学疑难。补充发展了脉学（独取寸口）、经络（奇经八脉）、脏腑（命门学说）等理论。'},
-    {name:'《神农本草经》',era:'东汉',content:'现存最早本草学专著。载药365种，按上中下三品分类。确立四气五味、升降浮沉等药性理论，奠定中药学基础。'},
-    {name:'《伤寒杂病论》',era:'东汉·张仲景',content:'创立六经辨证体系，确立"辨证论治"原则。分《伤寒论》和《金匮要略》。载方314首，被尊为"方书之祖"，方剂至今沿用。'},
-    {name:'《温病条辨》',era:'清·吴鞠通',content:'温病学代表作。创卫气营血辨证和三焦辨证体系。上焦如羽非轻不举，中焦如衡非平不安，下焦如权非重不沉。名方：银翘散、桑菊饮、安宫牛黄丸。'},
-    {name:'《医学心悟》',era:'清·程钟龄',content:'提出"医门八法"：汗、吐、下、和、温、清、消、补。论述简明扼要，便于初学。名言："论治之法，则当知邪正之分。"'},
-    {name:'《思考中医》',era:'现代·刘力红',content:'以现代视角诠释《伤寒论》，强调中医思维方式的重要性。提出"道"与"术"的关系，帮助理解中医理论的哲学根基。'},
-    {name:'《名老中医之路》',era:'现代',content:'收录数十位国医大师的成长历程和临床心得。展现各家学术思想和辨证用药特色，是学习名家经验的宝贵资料。'}
-  ];
-  return classics.map(c=>`<div class="tcm-case-item">
-    <div class="title">${c.name} <span style="font-weight:normal;color:#888;font-size:12px">${c.era}</span></div>
-    <div style="font-size:13px;color:#555;line-height:1.7;margin-top:6px">${c.content}</div>
-  </div>`).join('');
+  const books = Object.keys(TCM_CLASSICS_DATA||{});
+  if (!books.length) return '<p style="color:#999">典籍数据加载中...</p>';
+  if (!window._tcmClassicBook) window._tcmClassicBook = books[0];
+  if (window._tcmClassicChapter===undefined) window._tcmClassicChapter = 0;
+  return `<div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      ${books.map(k => {
+        const b = TCM_CLASSICS_DATA[k];
+        return `<button class="tcm-btn ${window._tcmClassicBook===k?'tcm-btn-primary':''}" style="${window._tcmClassicBook!==k?'background:#f5f5f5':''};font-size:11px;padding:4px 8px" onclick="switchTcmClassicBook('${k}')">${b.short}</button>`;
+      }).join('')}
+    </div>
+    <div id="tcmClassicDetail">${renderTcmClassicDetail(window._tcmClassicBook)}</div>
+  </div>`;
+}
+
+function switchTcmClassicBook(bookId) {
+  window._tcmClassicBook = bookId;
+  window._tcmClassicChapter = 0;
+  document.getElementById('tcmClassicDetail').innerHTML = renderTcmClassicDetail(bookId);
+}
+
+function switchTcmClassicChapter(idx) {
+  window._tcmClassicChapter = idx;
+  document.getElementById('tcmClassicChapterBody').innerHTML = renderTcmClassicChapterContent(window._tcmClassicBook, idx);
+}
+
+function renderTcmClassicDetail(bookId) {
+  const b = TCM_CLASSICS_DATA[bookId];
+  if (!b) return '<p style="color:#999">暂无数据</p>';
+  return `<div style="border:1px solid #a5d6a7;border-radius:10px;padding:14px;background:#f9fff9">
+    <h4 style="color:#2e7d32;margin:0 0 6px">${b.name}</h4>
+    <p style="font-size:12px;color:#888;margin:0 0 8px">${b.era} | ${b.author}</p>
+    <p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:12px">${b.intro}</p>
+    <h5 style="color:#2e7d32;margin:10px 0 8px">章节目录（点击阅读原文+白话对照）</h5>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      ${b.chapters.map((c,i) =>
+        `<button class="tcm-btn ${window._tcmClassicChapter===i?'tcm-btn-primary':''}" style="${window._tcmClassicChapter!==i?'background:#e8f5e9':''};font-size:11px;padding:4px 10px" onclick="switchTcmClassicChapter(${i})">${c.title}</button>`
+      ).join('')}
+    </div>
+    <div id="tcmClassicChapterBody">${renderTcmClassicChapterContent(bookId, window._tcmClassicChapter)}</div>
+  </div>`;
+}
+
+function renderTcmClassicChapterContent(bookId, chapterIdx) {
+  const b = TCM_CLASSICS_DATA[bookId];
+  if (!b || !b.chapters[chapterIdx]) return '';
+  const ch = b.chapters[chapterIdx];
+  return `<div style="border:1px solid #c8e6c9;border-radius:8px;overflow:hidden">
+    <div style="background:#e8f5e9;padding:10px 14px;border-bottom:1px solid #c8e6c9">
+      <h5 style="margin:0;color:#2e7d32;font-size:14px">${ch.title}</h5>
+      ${ch.subtitle?`<p style="margin:4px 0 0;font-size:12px;color:#888">${ch.subtitle}</p>`:''}
+    </div>
+    <div style="padding:14px">
+      ${ch.sections.map(s => `
+        <div style="margin-bottom:16px">
+          ${s.heading?`<p style="font-weight:bold;color:#33691e;margin:0 0 8px;font-size:13px">${s.heading}</p>`:''}
+          <div style="padding:10px 12px;background:#fffef8;border-left:3px solid #66bb6a;margin-bottom:8px;font-family:KaiTi,STKaiti,serif;font-size:14px;color:#333;line-height:2">
+            ${s.original}
+          </div>
+          <div style="padding:10px 12px;background:#f1f8e9;border-left:3px solid #aed581;font-size:13px;color:#33691e;line-height:1.8">
+            <b>【白话文】</b>${s.translation}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
 }
 
 function renderTcmTheory() {
