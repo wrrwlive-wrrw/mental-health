@@ -1,6 +1,6 @@
 // 西医智能诊疗 - 结构化诊断流程
 let wmDiagStep = 0;
-let wmDiagData = { chiefComplaint:'', hpi:'', pmh:'', pe:'', labs:'', imaging:'', aiResult:'' };
+let wmDiagData = { chiefComplaint:'', hpi:'', pmh:'', pe:'', labs:'', imaging:'', aiResult:'', attachments:[] };
 
 function renderWmDiagnosis() {
   const p = getWmCurrentPatient();
@@ -62,12 +62,31 @@ function renderWmStep2() {
 }
 
 function renderWmStep3() {
+  const files = wmDiagData.attachments || [];
   return `<div class="wm-card">
     <h4>辅助检查</h4>
     <div class="wm-form-group"><label>化验结果</label>
       <textarea id="wmLabs" placeholder="如：WBC 12.5×10^9/L，CRP 45mg/L...">${wmDiagData.labs}</textarea></div>
     <div class="wm-form-group"><label>影像检查</label>
       <textarea id="wmImaging" placeholder="如：胸部CT示右下肺斑片影...">${wmDiagData.imaging}</textarea></div>
+    <div style="margin:12px 0;padding:12px;background:#f5f9ff;border-radius:8px;border:1px dashed #90caf9">
+      <p style="font-size:12px;font-weight:bold;color:#1565c0;margin:0 0 8px">📎 附件采集（报告单/影像/视频）</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <label class="wm-btn" style="font-size:12px;cursor:pointer">
+          📄 上传文档<input type="file" accept=".pdf,.doc,.docx,.txt" multiple hidden onchange="wmAddFiles(this,'doc')">
+        </label>
+        <label class="wm-btn" style="font-size:12px;cursor:pointer">
+          🖼️ 上传图片<input type="file" accept="image/*" multiple hidden onchange="wmAddFiles(this,'image')">
+        </label>
+        <label class="wm-btn" style="font-size:12px;cursor:pointer">
+          🎥 上传视频<input type="file" accept="video/*" hidden onchange="wmAddFiles(this,'video')">
+        </label>
+        <label class="wm-btn" style="font-size:12px;cursor:pointer">
+          📷 拍照<input type="file" accept="image/*" capture="environment" hidden onchange="wmAddFiles(this,'image')">
+        </label>
+      </div>
+      <div id="wmAttachList">${renderWmAttachments(files)}</div>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="wm-btn" onclick="wmDiagStep=2;showWmTab('diagnosis')">← 上一步</button>
       <button class="wm-btn wm-btn-primary" onclick="wmDiagNext(3)">AI诊断分析 →</button>
@@ -146,17 +165,78 @@ async function runWmDiagAI() {
 function saveWmDiagRecord() {
   const patient = getWmCurrentPatient();
   if (!patient) return;
+  const attachSummary = (wmDiagData.attachments||[]).map(f => `${f.name}(${f.type})`).join('、');
   addWmRecord(patient.id, {
     type:'diagnosis', chiefComplaint:wmDiagData.chiefComplaint,
     hpi:wmDiagData.hpi, pmh:wmDiagData.pmh, pe:wmDiagData.pe,
     examResults:(wmDiagData.labs+' '+wmDiagData.imaging).trim(),
-    diagnosis:wmDiagData.aiResult, medications:'', note:''
+    attachments: (wmDiagData.attachments||[]).map(f => ({name:f.name, type:f.type, mime:f.mime, size:f.size, addedAt:f.addedAt})),
+    diagnosis:wmDiagData.aiResult, medications:'',
+    note: attachSummary ? '附件：'+attachSummary : ''
   });
   alert('诊断记录已保存');
 }
 
 function resetWmDiag() {
   wmDiagStep = 0;
-  wmDiagData = { chiefComplaint:'', hpi:'', pmh:'', pe:'', labs:'', imaging:'', aiResult:'' };
+  wmDiagData = { chiefComplaint:'', hpi:'', pmh:'', pe:'', labs:'', imaging:'', aiResult:'', attachments:[] };
   showWmTab('diagnosis');
+}
+
+// ========== 附件采集功能 ==========
+function wmAddFiles(input, type) {
+  if (!input.files || !input.files.length) return;
+  if (!wmDiagData.attachments) wmDiagData.attachments = [];
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      wmDiagData.attachments.push({
+        id: 'att_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        name: file.name,
+        type: type,
+        size: file.size,
+        mime: file.type,
+        data: e.target.result,
+        addedAt: new Date().toISOString()
+      });
+      document.getElementById('wmAttachList').innerHTML = renderWmAttachments(wmDiagData.attachments);
+    };
+    if (type === 'image') { reader.readAsDataURL(file); }
+    else if (type === 'video') { reader.readAsDataURL(file); }
+    else { reader.readAsDataURL(file); }
+  });
+  input.value = '';
+}
+
+function renderWmAttachments(files) {
+  if (!files || !files.length) return '<p style="font-size:11px;color:#999;margin:0">暂无附件</p>';
+  return `<div style="display:flex;flex-wrap:wrap;gap:8px">${files.map((f, i) => {
+    let preview = '';
+    if (f.type === 'image' && f.data) {
+      preview = `<img src="${f.data}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;display:block;margin-bottom:4px">`;
+    } else if (f.type === 'video' && f.data) {
+      preview = `<video src="${f.data}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;display:block;margin-bottom:4px"></video>`;
+    } else {
+      const icon = f.type==='doc'?'📄':'📎';
+      preview = `<div style="width:60px;height:60px;background:#e3f2fd;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:4px">${icon}</div>`;
+    }
+    return `<div style="text-align:center;position:relative;width:70px">
+      ${preview}
+      <p style="font-size:10px;color:#555;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:70px">${f.name}</p>
+      <span onclick="wmRemoveAttach(${i})" style="position:absolute;top:-4px;right:-4px;background:#f44336;color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px;text-align:center;cursor:pointer">×</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function wmRemoveAttach(idx) {
+  if (!wmDiagData.attachments) return;
+  wmDiagData.attachments.splice(idx, 1);
+  document.getElementById('wmAttachList').innerHTML = renderWmAttachments(wmDiagData.attachments);
+}
+
+function wmPreviewAttach(idx) {
+  const f = wmDiagData.attachments[idx];
+  if (!f) return;
+  if (f.type === 'image') { window.open(f.data, '_blank'); }
+  else if (f.type === 'video') { window.open(f.data, '_blank'); }
 }
