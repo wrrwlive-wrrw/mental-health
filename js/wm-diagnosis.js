@@ -63,6 +63,7 @@ function renderWmStep2() {
 
 function renderWmStep3() {
   const files = wmDiagData.attachments || [];
+  const hasImages = files.some(f => f.type==='image');
   return `<div class="wm-card">
     <h4>辅助检查</h4>
     <div class="wm-form-group"><label>化验结果</label>
@@ -86,6 +87,15 @@ function renderWmStep3() {
         </label>
       </div>
       <div id="wmAttachList">${renderWmAttachments(files)}</div>
+      ${hasImages?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0">
+        <p style="font-size:11px;color:#666;margin:0 0 6px">AI可识别图片中的化验单、报告单、处方等文字内容</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('labs')">🔍 AI识别→填入化验</button>
+          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('imaging')">🔍 AI识别→填入影像</button>
+          <button class="wm-btn" style="font-size:12px;background:#e8f5e9" onclick="wmAiRecognizeImages('all')">🔍 AI综合识别所有图片</button>
+        </div>
+        <div id="wmOcrStatus" style="margin-top:8px;font-size:12px;color:#1565c0"></div>
+      </div>`:''}
     </div>
     <div style="display:flex;gap:8px">
       <button class="wm-btn" onclick="wmDiagStep=2;showWmTab('diagnosis')">← 上一步</button>
@@ -140,19 +150,35 @@ async function runWmDiagAI() {
   if (!AI_CONFIG.apiKey) { wmDiagData.aiResult='需要配置AI API Key'; showWmTab('diagnosis'); return; }
   const patient = getWmCurrentPatient();
   const info = formatWmPatientPrompt(patient);
-  const prompt = getWmDiagnosePrompt() + info + `\n\n请根据以下病史资料进行诊断分析：
+  const textPrompt = getWmDiagnosePrompt() + info + `\n\n请根据以下病史资料进行诊断分析：
 【主诉】${wmDiagData.chiefComplaint}
 【现病史】${wmDiagData.hpi||'未提供'}
 【既往史】${wmDiagData.pmh||'未提供'}
 【体格检查】${wmDiagData.pe||'未提供'}
 【化验】${wmDiagData.labs||'未提供'}
 【影像】${wmDiagData.imaging||'未提供'}
+${wmDiagData.attachments&&wmDiagData.attachments.length?'【附件说明】已上传'+wmDiagData.attachments.length+'个文件，包括图片中的化验单/影像报告，请仔细阅读图片内容进行分析。':''}
 
 请给出：1.初步诊断 2.鉴别诊断 3.诊断依据 4.建议进一步检查`;
+
+  // 构建多模态消息（如果有图片附件则用 vision 格式）
+  const imageAttachs = (wmDiagData.attachments||[]).filter(f => f.type==='image' && f.data);
+  let messages;
+  if (imageAttachs.length > 0) {
+    // 多模态格式：text + images
+    const userContent = [{type:'text', text:textPrompt}];
+    imageAttachs.slice(0, 5).forEach(img => {
+      userContent.push({type:'image_url', image_url:{url:img.data, detail:'high'}});
+    });
+    messages = [{role:'user', content:userContent}];
+  } else {
+    messages = [{role:'system', content:textPrompt}];
+  }
+
   try {
     const resp = await fetch(AI_CONFIG.apiUrl, {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_CONFIG.apiKey},
-      body:JSON.stringify({model:AI_CONFIG.model, messages:[{role:'system',content:prompt}], max_tokens:2000, temperature:0.5})
+      body:JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:3000, temperature:0.4})
     });
     const data = await resp.json();
     let reply = data.choices?.[0]?.message?.content||'分析失败';
@@ -239,4 +265,74 @@ function wmPreviewAttach(idx) {
   if (!f) return;
   if (f.type === 'image') { window.open(f.data, '_blank'); }
   else if (f.type === 'video') { window.open(f.data, '_blank'); }
+}
+
+// ========== AI图片/文档识别功能 ==========
+async function wmAiRecognizeImages(target) {
+  if (!AI_CONFIG.apiKey) { alert('请先配置AI API Key'); return; }
+  const images = (wmDiagData.attachments||[]).filter(f => f.type==='image' && f.data);
+  if (!images.length) { alert('没有可识别的图片'); return; }
+
+  const statusEl = document.getElementById('wmOcrStatus');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#e65100">⏳ AI正在识别图片内容，请稍候...</span>';
+
+  const promptMap = {
+    labs: '请仔细阅读这些医学检验报告/化验单图片，精确提取所有检验项目及其数值、单位和参考范围。按以下格式输出：\n项目名称：数值 单位（参考范围）↑或↓\n标注异常值（偏高用↑，偏低用↓）。只输出识别结果，不做诊断分析。',
+    imaging: '请仔细阅读这些医学影像报告/检查报告图片，精确提取报告中的所有内容，包括：检查部位、检查所见、诊断意见等。保持原始报告的结构和用词，完整准确地转录。',
+    all: '请仔细阅读这些医学相关图片（可能包含化验单、影像报告、处方、病历等），精确识别并提取所有文字内容。分类整理输出：\n【化验结果】（如有）列出各项指标数值\n【影像报告】（如有）转录报告内容\n【其他内容】（如有）完整转录'
+  };
+
+  const userContent = [
+    {type:'text', text:promptMap[target]||promptMap.all}
+  ];
+  images.slice(0, 6).forEach(img => {
+    userContent.push({type:'image_url', image_url:{url:img.data, detail:'high'}});
+  });
+
+  try {
+    const resp = await fetch(AI_CONFIG.apiUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_CONFIG.apiKey},
+      body:JSON.stringify({
+        model: AI_CONFIG.model,
+        messages:[{role:'user', content:userContent}],
+        max_tokens: 2000,
+        temperature: 0.2
+      })
+    });
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    let result = data.choices?.[0]?.message?.content||'';
+    if (result.includes('</think>')) result = result.split('</think>').pop().trim();
+
+    if (!result) { if (statusEl) statusEl.innerHTML='<span style="color:#f44336">识别失败，未获取到内容</span>'; return; }
+
+    // 根据target填入对应文本框
+    if (target === 'labs') {
+      const el = document.getElementById('wmLabs');
+      if (el) { el.value = (el.value ? el.value+'\n' : '') + result; wmDiagData.labs = el.value; }
+    } else if (target === 'imaging') {
+      const el = document.getElementById('wmImaging');
+      if (el) { el.value = (el.value ? el.value+'\n' : '') + result; wmDiagData.imaging = el.value; }
+    } else {
+      // all模式：分别填入
+      const labMatch = result.match(/【化验结果】([\s\S]*?)(?=【|$)/);
+      const imgMatch = result.match(/【影像报告】([\s\S]*?)(?=【|$)/);
+      if (labMatch) {
+        const el = document.getElementById('wmLabs');
+        if (el) { el.value = (el.value?el.value+'\n':'') + labMatch[1].trim(); wmDiagData.labs = el.value; }
+      }
+      if (imgMatch) {
+        const el = document.getElementById('wmImaging');
+        if (el) { el.value = (el.value?el.value+'\n':'') + imgMatch[1].trim(); wmDiagData.imaging = el.value; }
+      }
+      if (!labMatch && !imgMatch) {
+        const el = document.getElementById('wmLabs');
+        if (el) { el.value = (el.value?el.value+'\n':'') + result; wmDiagData.labs = el.value; }
+      }
+    }
+    if (statusEl) statusEl.innerHTML = `<span style="color:#2e7d32">✓ 识别完成，已填入${images.length}张图片的内容</span>`;
+  } catch(e) {
+    if (statusEl) statusEl.innerHTML = `<span style="color:#f44336">识别失败：${e.message}</span>`;
+  }
 }

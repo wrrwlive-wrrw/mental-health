@@ -1,6 +1,7 @@
 // 西医智能诊疗 - AI智能体模块
 let wmAgentHistory = [];
 let wmAgentMode = 'diagnose';
+let wmAgentImages = []; // 待发送的图片base64数组
 
 function renderWmAiAgent() {
   const patient = getWmCurrentPatient();
@@ -31,18 +32,23 @@ function renderWmAiAgent() {
         `<button class="wm-btn" style="font-size:11px;padding:4px 10px" onclick="askWmAgent('${q}')">${q}</button>`
       ).join('')}
     </div>
+    <div id="wmAgentImgPreview" style="margin-bottom:6px"></div>
     <div class="wm-chat-input">
       <input id="wmAgentInput" placeholder="描述症状或输入检查结果..." onkeydown="if(event.key==='Enter')sendWmAgent()">
+      <label style="padding:8px 12px;background:#e3f2fd;border-radius:6px;cursor:pointer;font-size:16px;line-height:1" title="上传图片让AI识别">
+        🖼️<input type="file" accept="image/*" multiple hidden onchange="wmAgentAddImages(this)">
+      </label>
       <button onclick="sendWmAgent()">发送</button>
     </div>
-    <div style="margin-top:8px">
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="wm-btn" style="background:#f5f5f5;font-size:12px" onclick="clearWmAgent()">清空记录</button>
+      <span style="font-size:11px;color:#999;line-height:28px">支持发送图片（化验单/CT/报告）让AI识别分析</span>
     </div>
   </div>`;
 }
 
-function switchWmAgent(mode) { wmAgentMode = mode; wmAgentHistory = []; showWmTab('aiAgent'); }
-function clearWmAgent() { wmAgentHistory = []; showWmTab('aiAgent'); }
+function switchWmAgent(mode) { wmAgentMode = mode; wmAgentHistory = []; wmAgentImages=[]; showWmTab('aiAgent'); }
+function clearWmAgent() { wmAgentHistory = []; wmAgentImages=[]; showWmTab('aiAgent'); }
 
 function getWmAgentDesc() {
   const d = { diagnose:'系统性问诊采集病史体征，给出鉴别诊断和检查建议', interpret:'解读化验单、影像报告等检查结果，分析临床意义', treatment:'根据诊断给出循证医学治疗方案（药物+非药物+随访）' };
@@ -64,9 +70,16 @@ function askWmAgent(q) { document.getElementById('wmAgentInput').value = q; send
 async function sendWmAgent() {
   const input = document.getElementById('wmAgentInput');
   const text = input?.value.trim();
-  if (!text) return;
+  if (!text && !wmAgentImages.length) return;
   input.value = '';
-  wmAgentHistory.push({role:'user', content:text});
+
+  // 构建用户消息显示
+  let displayMsg = text || '';
+  if (wmAgentImages.length) displayMsg += (displayMsg?' ':'') + `[附${wmAgentImages.length}张图片]`;
+  wmAgentHistory.push({role:'user', content:displayMsg, images: wmAgentImages.length?[...wmAgentImages]:null});
+  const sendImages = [...wmAgentImages];
+  wmAgentImages = [];
+  updateWmAgentImgPreview();
   refreshWmAgentChat();
 
   if (!AI_CONFIG.apiKey) {
@@ -76,15 +89,28 @@ async function sendWmAgent() {
 
   const sysPrompt = getWmAgentSysPrompt();
   const messages = [{role:'system', content:sysPrompt}];
+
+  // 构建历史消息（最近14条）
   wmAgentHistory.slice(-14).forEach(m => {
-    messages.push({role:m.role==='user'?'user':'assistant', content:m.content});
+    if (m.role==='user') {
+      if (m.images && m.images.length) {
+        // 多模态消息
+        const content = [{type:'text', text:m.content||'请分析这些图片'}];
+        m.images.forEach(img => content.push({type:'image_url', image_url:{url:img, detail:'high'}}));
+        messages.push({role:'user', content});
+      } else {
+        messages.push({role:'user', content:m.content});
+      }
+    } else {
+      messages.push({role:'assistant', content:m.content});
+    }
   });
 
   try {
     const resp = await fetch(AI_CONFIG.apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_CONFIG.apiKey},
-      body:JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:2000, temperature:0.6})
+      body:JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:2500, temperature:0.6})
     });
     if (!resp.ok) throw new Error('HTTP '+resp.status);
     const data = await resp.json();
@@ -110,13 +136,56 @@ function getWmAgentSysPrompt() {
 function refreshWmAgentChat() {
   const el = document.getElementById('wmAgentChat');
   if (!el) return;
-  el.innerHTML = wmAgentHistory.map(m =>
-    `<div class="wm-chat-msg ${m.role}">${m.role==='ai'?formatWmAnswer(m.content):m.content}</div>`
-  ).join('');
+  el.innerHTML = wmAgentHistory.map(m => {
+    if (m.role==='ai') {
+      return `<div class="wm-chat-msg ai">${formatWmAnswer(m.content)}</div>`;
+    } else {
+      let imgHtml = '';
+      if (m.images && m.images.length) {
+        imgHtml = `<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">${m.images.map(img =>
+          `<img src="${img}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:1px solid #90caf9">`
+        ).join('')}</div>`;
+      }
+      return `<div class="wm-chat-msg user">${m.content}${imgHtml}</div>`;
+    }
+  }).join('');
   el.scrollTop = el.scrollHeight;
 }
 
 function formatWmAnswer(text) {
   return text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
     .replace(/【(.*?)】/g,'<b style="color:#1565c0">【$1】</b>');
+}
+
+// ========== 图片上传与预览（AI智能体） ==========
+function wmAgentAddImages(input) {
+  if (!input.files || !input.files.length) return;
+  Array.from(input.files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      wmAgentImages.push(e.target.result);
+      updateWmAgentImgPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function updateWmAgentImgPreview() {
+  const el = document.getElementById('wmAgentImgPreview');
+  if (!el) return;
+  if (!wmAgentImages.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:#f5f9ff;border-radius:6px;border:1px solid #90caf9">
+    <span style="font-size:11px;color:#1565c0;line-height:40px">待发送：</span>
+    ${wmAgentImages.map((img,i) => `<div style="position:relative">
+      <img src="${img}" style="width:40px;height:40px;object-fit:cover;border-radius:4px">
+      <span onclick="wmAgentRemoveImg(${i})" style="position:absolute;top:-4px;right:-4px;background:#f44336;color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;line-height:14px;text-align:center;cursor:pointer">×</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+function wmAgentRemoveImg(idx) {
+  wmAgentImages.splice(idx, 1);
+  updateWmAgentImgPreview();
 }
