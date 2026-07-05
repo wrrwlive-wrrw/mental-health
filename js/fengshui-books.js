@@ -54,6 +54,10 @@ function renderFsBookDetail(bookId) {
       <p style="font-size:13px;color:#333;margin:0;line-height:1.7">${b.keyPoints}</p>
     </div>
     <p style="font-size:12px;color:#2e7d32;margin-bottom:12px"><b>📖 学习建议：</b>${b.study}</p>
+    ${b.lectures?`<div style="background:#e8eaf6;padding:10px;border-radius:6px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:bold;color:#283593;margin:0 0 6px">🎓 高校课程讲座推荐：</p>
+      ${b.lectures.map(l=>`<p style="font-size:12px;color:#333;margin:0 0 4px;line-height:1.6">• <b>${l.teacher}</b>（${l.school}）：${l.course}${l.note?' — '+l.note:''}</p>`).join('')}
+    </div>`:''}
     <h5 style="color:#8b6914;margin:12px 0 8px">章节目录（点击阅读原文+白话对照）</h5>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
       ${b.chapters.map((c,i) =>
