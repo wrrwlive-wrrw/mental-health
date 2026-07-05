@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/fengshui-lab2.css">
   <link rel="stylesheet" href="css/tcm.css">
   <link rel="stylesheet" href="css/wm.css">
+  <link rel="stylesheet" href="css/food-medicine.css">
 </head>
 <body>
   <div class="container">
@@ -233,6 +234,16 @@
             </div>
           </div>
 
+          <div class="feature-card" onclick="showPage('foodMedicine');renderFoodMedicine()">
+            <div class="feature-icon">🍲</div>
+            <h3 class="feature-title">药食同源</h3>
+            <p class="feature-desc">各地药膳美食、养生茶饮、免疫力食谱，食疗养生智慧助力身心健康</p>
+            <div class="feature-tags">
+              <span class="tag tag-green">药膳食疗</span>
+              <span class="tag tag-orange">养生茶饮</span>
+            </div>
+          </div>
+
         </div>
 
         <!-- 评估说明 -->
@@ -413,6 +424,15 @@
       </div>
     </div>
 
+    <!-- 药食同源页 -->
+    <div id="foodMedicine" class="page">
+      <div class="card">
+        <h2 style="text-align:center;color:#8b4513;margin-bottom:20px">🍲 药食同源</h2>
+        <div id="foodMedicineContent"></div>
+        <button class="btn btn-secondary" onclick="showPage('home')" style="margin-top:20px;width:100%">返回首页</button>
+      </div>
+    </div>
+
     <!-- 流派知识图谱页 -->
     <div id="knowledgeGraph" class="page">
       <div class="card">
@@ -489,6 +509,8 @@
   <script src="js/wm-diagnosis.js"></script>
   <script src="js/wm-integrate.js"></script>
   <script src="js/wm.js"></script>
+  <script src="js/food-medicine-data.js"></script>
+  <script src="js/food-medicine.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
