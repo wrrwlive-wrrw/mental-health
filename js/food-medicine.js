@@ -3,7 +3,8 @@ const FOOD_MEDICINE_MODULES = {
   overview: {name:'药食同源',icon:'🍲',desc:'食疗养生理念与分类总览'},
   regional: {name:'各地美食',icon:'🗺️',desc:'各地药膳美食、吃法与搭配'},
   immunity: {name:'免疫力食谱',icon:'💪',desc:'提升免疫力的食物组合方案'},
-  tea:      {name:'养生茶饮',icon:'🍵',desc:'养生茶介绍、配方与饮用指导'}
+  tea:      {name:'养生茶饮',icon:'🍵',desc:'养生茶介绍、配方与饮用指导'},
+  organ:    {name:'脏腑食疗',icon:'🫁',desc:'肺肝脾胃专属茶饮与药膳配方'}
 };
 let fmCurrentTab = 'overview';
 
@@ -37,6 +38,7 @@ function showFmTab(tab) {
     case 'regional': return renderFmRegional();
     case 'immunity': return renderFmImmunity();
     case 'tea': return renderFmTea();
+    case 'organ': return renderFmOrgan();
     default: return '';
   }
 }
@@ -112,3 +114,36 @@ function renderFmTeaList(cat) {
   </div>`).join('');
 }
 function fmFilterTea(cat){document.getElementById('fmTeaList').innerHTML=renderFmTeaList(cat);}
+
+// 脏腑食疗渲染
+let fmOrganCurrent = 'lung';
+function renderFmOrgan() {
+  if(typeof FM_ORGAN_RECIPES==='undefined') return '<p style="color:#999">数据加载中...</p>';
+  const organs = Object.entries(FM_ORGAN_RECIPES);
+  const cur = FM_ORGAN_RECIPES[fmOrganCurrent];
+  return `<div>
+    <div class="fm-filter">
+      ${organs.map(([k,v])=>`<button class="fm-filter-btn ${fmOrganCurrent===k?'active':''}" onclick="fmSwitchOrgan('${k}')">${v.icon} ${v.name}</button>`).join('')}
+    </div>
+    <div style="background:${cur.color};padding:12px;border-radius:8px;margin-bottom:12px">
+      <p style="font-size:13px;color:#555;line-height:1.7;margin:0"><b>${cur.icon} ${cur.name}：</b>${cur.intro}</p>
+    </div>
+    <p class="fm-section-title">食疗配方（${cur.recipes.filter(r=>r.type==='食疗').length}个）</p>
+    ${cur.recipes.filter(r=>r.type==='食疗').map(r=>`<div class="fm-card">
+      <h4>🍽️ ${r.name} <span class="fm-tag fm-tag-green">${r.type}</span></h4>
+      <p><b>食材：</b>${r.ingredients}</p>
+      <p><b>做法：</b>${r.method}</p>
+      <p><b>功效：</b>${r.benefits}</p>
+      <p><b>适用：</b>${r.suitable}</p>
+    </div>`).join('')}
+    <p class="fm-section-title">养生茶饮（${cur.recipes.filter(r=>r.type==='茶饮').length}个）</p>
+    ${cur.recipes.filter(r=>r.type==='茶饮').map(r=>`<div class="fm-tea-card">
+      <h4>🍵 ${r.name} <span class="fm-tag fm-tag-green">${r.type}</span></h4>
+      <p><b>配方：</b>${r.ingredients}</p>
+      <p><b>泡法：</b>${r.method}</p>
+      <p><b>功效：</b>${r.benefits}</p>
+      <p><b>适用：</b>${r.suitable}</p>
+    </div>`).join('')}
+  </div>`;
+}
+function fmSwitchOrgan(k){fmOrganCurrent=k;document.getElementById('fmPanel').innerHTML=renderFmOrgan();}
