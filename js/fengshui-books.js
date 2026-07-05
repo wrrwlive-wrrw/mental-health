@@ -43,6 +43,10 @@ function switchFsBookChapter(idx) {
 
 // 渲染书籍详情页
 function renderFsBookDetail(bookId) {
+  // 金瓶梅使用独立的100回渲染
+  if (bookId === 'jinpingmei' && typeof JINPINGMEI_FULL !== 'undefined') {
+    return renderJpmDetail();
+  }
   const b = FS_BOOKS_DATA[bookId];
   if (!b) return '<p style="color:#999">暂无此书数据</p>';
   return `<div style="border:1px solid #d4a847;border-radius:10px;padding:16px;background:#fffdf5">
@@ -98,4 +102,55 @@ function renderFsChapterContent(bookId, chapterIdx) {
       `).join('')}
     </div>
   </div>`;
+}
+
+// 金瓶梅100回分页渲染
+let jpmPage = 0;
+const JPM_PAGE_SIZE = 10;
+
+function renderJpmDetail() {
+  const d = JINPINGMEI_FULL;
+  const totalPages = Math.ceil(d.chapters.length / JPM_PAGE_SIZE);
+  return `<div style="border:1px solid #6a1b9a;border-radius:10px;padding:16px;background:#fdf5ff">
+    <h4 style="color:#6a1b9a;margin:0 0 6px">${d.name}</h4>
+    <p style="font-size:12px;color:#888;margin:0 0 10px">${d.era} | ${d.author}</p>
+    <p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:12px">${d.intro}</p>
+    <p style="font-size:12px;color:#2e7d32;margin-bottom:12px"><b>📖 学习建议：</b>${d.study}</p>
+    ${d.resources?`<div style="background:#e8eaf6;padding:10px;border-radius:6px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:bold;color:#283593;margin:0 0 6px">📚 学术资源：</p>
+      ${d.resources.map(r=>`<p style="font-size:12px;margin:0 0 4px"><a href="${r.url}" target="_blank" style="color:#1565c0">${r.name}</a></p>`).join('')}
+    </div>`:''}
+    ${d.lectures?`<div style="background:#e8eaf6;padding:10px;border-radius:6px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:bold;color:#283593;margin:0 0 6px">🎓 高校课程推荐：</p>
+      ${d.lectures.map(l=>`<p style="font-size:12px;color:#333;margin:0 0 4px">• <b>${l.teacher}</b>（${l.school}）：${l.course}${l.note?' — '+l.note:''}</p>`).join('')}
+    </div>`:''}
+    ${FS_BOOKS_CASES&&FS_BOOKS_CASES['jinpingmei']?`<div style="background:#fff8e1;padding:10px;border-radius:6px;margin-bottom:12px">
+      <p style="font-size:12px;font-weight:bold;color:#e65100;margin:0 0 6px">📋 应用案例（${FS_BOOKS_CASES['jinpingmei'].length}例）：</p>
+      <div style="max-height:160px;overflow-y:auto">
+        ${FS_BOOKS_CASES['jinpingmei'].map(c=>`<p style="font-size:12px;color:#333;margin:0 0 4px">• <b>[${c.era}]</b> ${c.title}：${c.desc}</p>`).join('')}
+      </div>
+    </div>`:''}
+    <h5 style="color:#6a1b9a;margin:12px 0 8px">全书100回目录（第${jpmPage*JPM_PAGE_SIZE+1}-${Math.min((jpmPage+1)*JPM_PAGE_SIZE,100)}回）</h5>
+    <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+      ${Array.from({length:totalPages},(_,i)=>`<button class="tcm-btn ${jpmPage===i?'tcm-btn-primary':''}" style="font-size:11px;padding:3px 8px" onclick="switchJpmPage(${i})">${i*JPM_PAGE_SIZE+1}-${Math.min((i+1)*JPM_PAGE_SIZE,100)}回</button>`).join('')}
+    </div>
+    <div id="jpmChapterList">${renderJpmChapters()}</div>
+  </div>`;
+}
+
+function switchJpmPage(page) {
+  jpmPage = page;
+  document.getElementById('jpmChapterList').innerHTML = renderJpmChapters();
+}
+
+function renderJpmChapters() {
+  const chs = JINPINGMEI_FULL.chapters;
+  const start = jpmPage * JPM_PAGE_SIZE;
+  const end = Math.min(start + JPM_PAGE_SIZE, chs.length);
+  return chs.slice(start, end).map(ch => `
+    <div style="border:1px solid #e1bee7;border-radius:6px;padding:10px 12px;margin-bottom:8px;background:#fff">
+      <p style="font-weight:bold;color:#6a1b9a;margin:0 0 4px;font-size:13px">${ch.title}：${ch.name}</p>
+      <p style="font-size:12px;color:#555;margin:0;line-height:1.7">${ch.desc}</p>
+    </div>
+  `).join('');
 }
