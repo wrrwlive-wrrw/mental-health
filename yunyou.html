@@ -46,18 +46,75 @@
     .yy-back:hover { background:rgba(255,255,255,0.2); color:#fff; }
     .yy-page { display:none; }
     .yy-page.active { display:block; }
-    #yyHome { display:block; }
+    #yyHome { display:none; }
     .container { max-width:900px; margin:0 auto; }
+    /* 登录页样式 */
+    .yy-login { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+    .yy-login-box { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
+      border-radius:20px; padding:40px 30px; width:100%; max-width:380px;
+      backdrop-filter:blur(15px); text-align:center; }
+    .yy-login-box h2 { color:#e0e0e0; font-size:22px; margin:0 0 6px;
+      background:linear-gradient(90deg,#64b5f6,#ce93d8,#ffab91);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .yy-login-box p { color:#78909c; font-size:13px; margin:0 0 24px; }
+    .yy-input { width:100%; padding:12px 16px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.15);
+      border-radius:10px; background:rgba(255,255,255,0.05); color:#e0e0e0;
+      font-size:14px; outline:none; box-sizing:border-box; }
+    .yy-input:focus { border-color:#64b5f6; background:rgba(255,255,255,0.08); }
+    .yy-input::placeholder { color:#607d8b; }
+    .yy-login-btn { width:100%; padding:12px; border:none; border-radius:10px;
+      background:linear-gradient(135deg,#42a5f5,#7e57c2); color:#fff;
+      font-size:15px; font-weight:bold; cursor:pointer; margin-top:8px; }
+    .yy-login-btn:hover { opacity:0.9; }
+    .yy-switch { color:#78909c; font-size:12px; margin-top:16px; }
+    .yy-switch a { color:#64b5f6; cursor:pointer; text-decoration:none; }
+    .yy-user-bar { display:flex; justify-content:space-between; align-items:center;
+      padding:8px 16px; margin:0 16px 10px; background:rgba(255,255,255,0.06);
+      border-radius:10px; border:1px solid rgba(255,255,255,0.1); }
+    .yy-user-bar span { color:#90a4ae; font-size:12px; }
+    .yy-user-bar button { background:none; border:1px solid rgba(255,255,255,0.2);
+      color:#ef5350; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; }
   </style>
 </head>
 <body>
   <button class="yy-back" id="yyBackBtn" onclick="yyGoHome()">← 返回</button>
   <div class="container">
+    <!-- 登录页 -->
+    <div id="yyLogin" class="yy-page active">
+      <div class="yy-login">
+        <div class="yy-login-box">
+          <h2>云游四海</h2>
+          <p>海阔天空 · 健康管理平台</p>
+          <input class="yy-input" id="yyLoginUser" placeholder="用户名" autocomplete="username">
+          <input class="yy-input" id="yyLoginPwd" type="password" placeholder="密码" autocomplete="current-password">
+          <button class="yy-login-btn" onclick="yyLogin()">登 录</button>
+          <div class="yy-switch"><a onclick="yyShowRegister()">没有账号？立即注册</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注册页 -->
+    <div id="yyRegister" class="yy-page">
+      <div class="yy-login">
+        <div class="yy-login-box">
+          <h2>注册账号</h2>
+          <p>创建您的健康管理档案</p>
+          <input class="yy-input" id="yyRegUser" placeholder="用户名（2-16位）" autocomplete="username">
+          <input class="yy-input" id="yyRegPwd" type="password" placeholder="密码（6位以上）" autocomplete="new-password">
+          <input class="yy-input" id="yyRegPwd2" type="password" placeholder="确认密码" autocomplete="new-password">
+          <input class="yy-input" id="yyRegName" placeholder="昵称（可选）">
+          <button class="yy-login-btn" onclick="yyRegister()">注 册</button>
+          <div class="yy-switch"><a onclick="yyShowLogin()">已有账号？返回登录</a></div>
+        </div>
+      </div>
+    </div>
+
     <!-- 首页 -->
-    <div id="yyHome" class="yy-page active">
+    <div id="yyHome" class="yy-page">
       <div class="yy-header">
         <h1 class="yy-title">云游四海 海阔天空</h1>
         <p class="yy-subtitle">传统智慧 · 现代科技 · 养生之道</p>
+        <button onclick="showAISettings()" style="margin-top:12px;padding:6px 16px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#90a4ae;border-radius:8px;font-size:12px;cursor:pointer;backdrop-filter:blur(5px)">⚙️ AI接口设置</button>
       </div>
       <div class="yy-grid">
         <div class="yy-card" onclick="yyShowPage('fengshui');renderFengshui()">
@@ -135,62 +192,16 @@
     </div>
   </div>
 
-  <!-- 核心脚本 -->
-  <script src="js/chat.js"></script>
-  <script src="js/user.js"></script>
-
-  <!-- 风水模块 -->
-  <script src="js/fengshui-user.js"></script>
-  <script src="js/fengshui-ai.js"></script>
-  <script src="js/fengshui-face.js"></script>
-  <script src="js/fengshui-ziwei.js"></script>
-  <script src="js/fengshui-bazi.js"></script>
-  <script src="js/fengshui-divination.js"></script>
-  <script src="js/fengshui-health.js"></script>
-  <script src="js/fengshui-books.js"></script>
-  <script src="js/fengshui-books-cases.js"></script>
-  <script src="js/fengshui-jinpingmei.js"></script>
-  <script src="js/fengshui.js"></script>
-
-  <!-- 中医模块 -->
-  <script src="js/tcm-patient.js"></script>
-  <script src="js/tcm-data.js"></script>
-  <script src="js/tcm-classics.js"></script>
-  <script src="js/tcm-classics-data.js"></script>
-  <script src="js/tcm-classics-data2.js"></script>
-  <script src="js/tcm-classics-data3.js"></script>
-  <script src="js/tcm-diagnosis.js"></script>
-  <script src="js/tcm-prescription.js"></script>
-  <script src="js/tcm-prompt.js"></script>
-  <script src="js/tcm-ai.js"></script>
-  <script src="js/tcm-camera.js"></script>
-  <script src="js/tcm-acupoint.js"></script>
-  <script src="js/tcm.js"></script>
-
-  <!-- 西医模块 -->
-  <script src="js/wm-patient.js"></script>
-  <script src="js/wm-prompt.js"></script>
-  <script src="js/wm-vision.js"></script>
-  <script src="js/wm-agent.js"></script>
-  <script src="js/wm-diagnosis.js"></script>
-  <script src="js/wm-integrate.js"></script>
-  <script src="js/wm.js"></script>
-
-  <!-- 药食同源模块 -->
-  <script src="js/food-medicine-data.js"></script>
-  <script src="js/food-medicine-organ.js"></script>
-  <script src="js/food-medicine-season.js"></script>
-  <script src="js/food-medicine-season-render.js"></script>
-  <script src="js/food-medicine-profile.js"></script>
-  <script src="js/food-medicine-ai.js"></script>
-  <script src="js/food-medicine.js"></script>
-
-  <!-- 页面导航脚本 -->
+  <!-- 预定义全局函数（在模块脚本加载前） -->
   <script>
-    // 云游四海页面切换
+    // 云游四海 - 用户管理与页面切换
+    let currentUser = null;
+
+    // 页面切换
     function yyShowPage(pageId) {
       document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
+      const el = document.getElementById(pageId);
+      if (el) el.classList.add('active');
       document.getElementById('yyBackBtn').style.display = 'block';
       window.scrollTo(0, 0);
     }
@@ -200,17 +211,164 @@
       document.getElementById('yyBackBtn').style.display = 'none';
       window.scrollTo(0, 0);
     }
-    // 兼容原有 showPage（部分模块内部调用）
     function showPage(pageId) {
-      if (pageId === 'home') { yyGoHome(); return; }
+      if (pageId === 'home' || pageId === 'login') { yyGoHome(); return; }
       yyShowPage(pageId);
     }
-    // 模拟 currentUser（部分模块需要）
-    let currentUser = { id:'yy_user', name:'云游客', phone:'', role:'student' };
-    // 初始化
-    window.onload = function() {
+
+    // 登录/注册切换
+    function yyShowRegister() {
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
+      document.getElementById('yyRegister').classList.add('active');
+    }
+    function yyShowLogin() {
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
+      document.getElementById('yyLogin').classList.add('active');
+    }
+
+    // 获取用户列表
+    function yyGetUsers() {
+      return JSON.parse(localStorage.getItem('yy_users') || '[]');
+    }
+    function yySaveUsers(users) {
+      localStorage.setItem('yy_users', JSON.stringify(users));
+    }
+
+    // 注册
+    function yyRegister() {
+      const u = document.getElementById('yyRegUser').value.trim();
+      const p = document.getElementById('yyRegPwd').value;
+      const p2 = document.getElementById('yyRegPwd2').value;
+      const name = document.getElementById('yyRegName').value.trim();
+      if (!u || u.length < 2 || u.length > 16) return alert('用户名需2-16位');
+      if (!p || p.length < 6) return alert('密码需6位以上');
+      if (p !== p2) return alert('两次密码不一致');
+      const users = yyGetUsers();
+      if (users.find(x => x.username === u)) return alert('用户名已存在');
+      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: 'student', createdAt: new Date().toISOString() };
+      users.push(user);
+      yySaveUsers(users);
+      alert('注册成功，请登录');
+      yyShowLogin();
+    }
+
+    // 登录
+    function yyLogin() {
+      const u = document.getElementById('yyLoginUser').value.trim();
+      const p = document.getElementById('yyLoginPwd').value;
+      if (!u || !p) return alert('请输入用户名和密码');
+      const users = yyGetUsers();
+      const user = users.find(x => x.username === u && x.password === btoa(p));
+      if (!user) return alert('用户名或密码错误');
+      currentUser = { id: user.id, name: user.name, username: user.username, role: user.role };
+      localStorage.setItem('yy_current', JSON.stringify(currentUser));
+      yyEnterHome();
+    }
+
+    // 登出
+    function yyLogout() {
+      currentUser = null;
+      localStorage.removeItem('yy_current');
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
+      document.getElementById('yyLogin').classList.add('active');
+      document.getElementById('yyBackBtn').style.display = 'none';
+    }
+
+    // 进入首页
+    function yyEnterHome() {
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
       document.getElementById('yyHome').classList.add('active');
-    };
+      document.getElementById('yyBackBtn').style.display = 'none';
+      yyRenderUserBar();
+    }
+
+    // 用户信息栏
+    function yyRenderUserBar() {
+      let bar = document.getElementById('yyUserBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'yyUserBar';
+        bar.className = 'yy-user-bar';
+        const header = document.querySelector('#yyHome .yy-header');
+        if (header) header.parentNode.insertBefore(bar, header);
+      }
+      bar.innerHTML = `<span>👤 ${currentUser ? currentUser.name : '未登录'}</span><button onclick="yyLogout()">退出登录</button>`;
+    }
+
+    // 自动登录检查
+    (function() {
+      const saved = localStorage.getItem('yy_current');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          yyEnterHome();
+        } catch(e) { localStorage.removeItem('yy_current'); }
+      }
+    })();
+
+    // 兼容其他模块调用
+    function checkAuth() {}
+    function updateHomeUserInfo() { yyRenderUserBar(); }
+    function getUsers() { return yyGetUsers().map(u => ({id:u.id,name:u.name,role:u.role})); }
+    function getCurrentUser() { return currentUser || {id:'guest',name:'游客',role:'student'}; }
   </script>
+
+  <!-- AI配置（精简版） -->
+  <script src="js/ai-config.js"></script>
+
+  <!-- 风水模块（完整） -->
+  <script src="js/fengshui-user.js"></script>
+  <script src="js/fengshui-form.js"></script>
+  <script src="js/fengshui-lab.js"></script>
+  <script src="js/fengshui-lab-interact.js"></script>
+  <script src="js/fengshui-lab-prompt.js"></script>
+  <script src="js/fengshui-lab-ai.js"></script>
+  <script src="js/fengshui-camera.js"></script>
+  <script src="js/fengshui-camera2.js"></script>
+  <script src="js/fengshui-business.js"></script>
+  <script src="js/fengshui-official.js"></script>
+  <script src="js/fengshui-yangsheng.js"></script>
+  <script src="js/fengshui-health.js"></script>
+  <script src="js/fengshui-books-data.js"></script>
+  <script src="js/fengshui-books-cases.js"></script>
+  <script src="js/fengshui-jinpingmei.js"></script>
+  <script src="js/fengshui-books.js"></script>
+  <script src="js/fengshui-agent.js"></script>
+  <script src="js/fengshui.js"></script>
+
+  <!-- 中医模块（完整） -->
+  <script src="js/tcm-patient.js"></script>
+  <script src="js/tcm-classics-data.js"></script>
+  <script src="js/tcm-knowledge.js"></script>
+  <script src="js/tcm-cases.js"></script>
+  <script src="js/tcm-prompt.js"></script>
+  <script src="js/tcm-ai.js"></script>
+  <script src="js/tcm-diagnosis.js"></script>
+  <script src="js/tcm-prescription.js"></script>
+  <script src="js/tcm-rx-identify.js"></script>
+  <script src="js/tcm-agent.js"></script>
+  <script src="js/tcm-camera.js"></script>
+  <script src="js/tcm-herb-db.js"></script>
+  <script src="js/tcm-herb-guide.js"></script>
+  <script src="js/tcm.js"></script>
+
+  <!-- 西医模块（完整） -->
+  <script src="js/wm-patient.js"></script>
+  <script src="js/wm-prompt.js"></script>
+  <script src="js/wm-vision.js"></script>
+  <script src="js/wm-agent.js"></script>
+  <script src="js/wm-diagnosis.js"></script>
+  <script src="js/wm-integrate.js"></script>
+  <script src="js/wm.js"></script>
+
+  <!-- 药食同源模块（完整） -->
+  <script src="js/food-medicine-data.js"></script>
+  <script src="js/food-medicine-organ.js"></script>
+  <script src="js/food-medicine-season.js"></script>
+  <script src="js/food-medicine-season-render.js"></script>
+  <script src="js/food-medicine-profile.js"></script>
+  <script src="js/food-medicine-ai.js"></script>
+  <script src="js/food-medicine.js"></script>
+
 </body>
 </html>
