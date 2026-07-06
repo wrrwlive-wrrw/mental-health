@@ -231,9 +231,14 @@
       document.getElementById('yyLogin').classList.add('active');
     }
 
-    // 获取用户列表
+    // 获取用户列表（首次自动创建默认管理员）
     function yyGetUsers() {
-      return JSON.parse(localStorage.getItem('yy_users') || '[]');
+      let users = JSON.parse(localStorage.getItem('yy_users') || '[]');
+      if (!users.find(u => u.username === 'admin')) {
+        users.unshift({ id: 'yy_admin', username: 'admin', password: btoa('admin123'), name: '管理员', role: 'admin', createdAt: '2024-01-01T00:00:00.000Z' });
+        localStorage.setItem('yy_users', JSON.stringify(users));
+      }
+      return users;
     }
     function yySaveUsers(users) {
       localStorage.setItem('yy_users', JSON.stringify(users));
