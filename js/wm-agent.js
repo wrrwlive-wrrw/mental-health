@@ -38,11 +38,14 @@ function renderWmAiAgent() {
       <label style="padding:8px 12px;background:#e3f2fd;border-radius:6px;cursor:pointer;font-size:16px;line-height:1" title="上传图片让AI识别">
         🖼️<input type="file" accept="image/*" multiple hidden onchange="wmAgentAddImages(this)">
       </label>
+      <label style="padding:8px 12px;background:#e8f5e9;border-radius:6px;cursor:pointer;font-size:16px;line-height:1" title="上传视频提取关键帧分析">
+        🎥<input type="file" accept="video/*" hidden onchange="wmAgentAddVideo(this)">
+      </label>
       <button onclick="sendWmAgent()">发送</button>
     </div>
     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="wm-btn" style="background:#f5f5f5;font-size:12px" onclick="clearWmAgent()">清空记录</button>
-      <span style="font-size:11px;color:#999;line-height:28px">支持发送图片（化验单/CT/报告）让AI识别分析</span>
+      <span style="font-size:11px;color:#999;line-height:28px">支持发送图片（化验单/CT/报告）和视频让AI智能识别分析</span>
     </div>
   </div>`;
 }
@@ -87,7 +90,7 @@ async function sendWmAgent() {
     refreshWmAgentChat(); return;
   }
 
-  const sysPrompt = getWmAgentSysPrompt();
+  const sysPrompt = getWmAgentSysPrompt(sendImages.length > 0);
   const messages = [{role:'system', content:sysPrompt}];
 
   // 构建历史消息（最近14条）
@@ -123,14 +126,26 @@ async function sendWmAgent() {
   refreshWmAgentChat();
 }
 
-function getWmAgentSysPrompt() {
+function getWmAgentSysPrompt(hasImages) {
   const patient = getWmCurrentPatient();
   const patientInfo = formatWmPatientPrompt(patient);
   const recordsInfo = formatWmRecordsPrompt(patient);
   const tcmRef = formatWmTcmCrossRef(patient);
   const prompts = { diagnose:getWmDiagnosePrompt(), interpret:getWmInterpretPrompt(), treatment:getWmTreatmentPrompt() };
-  return (prompts[wmAgentMode]||getWmBasePrompt()) + patientInfo + recordsInfo + tcmRef +
-    '\n\n【回答风格】条理清晰，分段论述。专业术语配通俗解释。重要内容用【】标注。';
+  let base = (prompts[wmAgentMode]||getWmBasePrompt()) + patientInfo + recordsInfo + tcmRef;
+  // 当有图片时添加医学图像分析指导
+  if (hasImages) {
+    base += `\n\n【医学图像分析能力】
+你同时具备影像科、检验科、病理科、心电图室的专业读片能力。当用户发送图片时：
+1. 先判断图片类型（化验单/影像/处方/心电图/病理/其他）
+2. 化验单：逐项提取数值，标注异常（↑偏高 ↓偏低），分析临床意义
+3. 影像图片：系统描述所见，给出诊断意见
+4. 处方：识别药物并评估合理性
+5. 心电图：分析各波段，给出诊断
+6. 将图片分析结果整合到整体诊断中`;
+  }
+  base += '\n\n【回答风格】条理清晰，分段论述。专业术语配通俗解释。重要内容用【】标注。';
+  return base;
 }
 
 function refreshWmAgentChat() {
@@ -172,9 +187,10 @@ function wmAgentAddImages(input) {
   input.value = '';
 }
 
-function updateWmAgentImgPreview() {
+function updateWmAgentImgPreview(msg) {
   const el = document.getElementById('wmAgentImgPreview');
   if (!el) return;
+  if (msg) { el.innerHTML = `<div style="padding:6px 10px;background:#fff3e0;border-radius:6px;font-size:12px;color:#e65100">${msg}</div>`; return; }
   if (!wmAgentImages.length) { el.innerHTML = ''; return; }
   el.innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:#f5f9ff;border-radius:6px;border:1px solid #90caf9">
     <span style="font-size:11px;color:#1565c0;line-height:40px">待发送：</span>
@@ -188,4 +204,24 @@ function updateWmAgentImgPreview() {
 function wmAgentRemoveImg(idx) {
   wmAgentImages.splice(idx, 1);
   updateWmAgentImgPreview();
+}
+
+// ========== 视频上传与帧提取（AI智能体） ==========
+async function wmAgentAddVideo(input) {
+  if (!input.files || !input.files.length) return;
+  const file = input.files[0];
+  if (!file.type.startsWith('video/')) return;
+  updateWmAgentImgPreview('⏳ 正在提取视频关键帧...');
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const frames = await wmExtractVideoFrames(e.target.result, 4);
+    if (frames.length) {
+      wmAgentImages.push(...frames);
+      updateWmAgentImgPreview();
+    } else {
+      updateWmAgentImgPreview('视频帧提取失败，请尝试上传图片');
+    }
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }

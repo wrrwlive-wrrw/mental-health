@@ -63,7 +63,7 @@ function renderWmStep2() {
 
 function renderWmStep3() {
   const files = wmDiagData.attachments || [];
-  const hasImages = files.some(f => f.type==='image');
+  const hasImages = files.some(f => f.type==='image') || files.some(f => f.type==='video');
   return `<div class="wm-card">
     <h4>辅助检查</h4>
     <div class="wm-form-group"><label>化验结果</label>
@@ -88,11 +88,11 @@ function renderWmStep3() {
       </div>
       <div id="wmAttachList">${renderWmAttachments(files)}</div>
       ${hasImages?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0">
-        <p style="font-size:11px;color:#666;margin:0 0 6px">AI可识别图片中的化验单、报告单、处方等文字内容</p>
+        <p style="font-size:11px;color:#666;margin:0 0 6px">AI增强识别：自动分类（化验单/影像/处方/心电图/病理），专业prompt精确提取，支持视频帧分析</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('labs')">🔍 AI识别→填入化验</button>
-          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('imaging')">🔍 AI识别→填入影像</button>
-          <button class="wm-btn" style="font-size:12px;background:#e8f5e9" onclick="wmAiRecognizeImages('all')">🔍 AI综合识别所有图片</button>
+          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('labs')">🔬 识别化验单</button>
+          <button class="wm-btn wm-btn-primary" style="font-size:12px" onclick="wmAiRecognizeImages('imaging')">🩻 识别影像报告</button>
+          <button class="wm-btn" style="font-size:12px;background:#e8f5e9" onclick="wmAiRecognizeImages('all')">🤖 AI智能分类识别</button>
         </div>
         <div id="wmOcrStatus" style="margin-top:8px;font-size:12px;color:#1565c0"></div>
       </div>`:''}
@@ -150,29 +150,40 @@ async function runWmDiagAI() {
   if (!AI_CONFIG.apiKey) { wmDiagData.aiResult='需要配置AI API Key'; showWmTab('diagnosis'); return; }
   const patient = getWmCurrentPatient();
   const info = formatWmPatientPrompt(patient);
-  const textPrompt = getWmDiagnosePrompt() + info + `\n\n请根据以下病史资料进行诊断分析：
+  const sysPrompt = getWmDiagnosePrompt() + info;
+  const userText = `请根据以下病史资料进行诊断分析：
 【主诉】${wmDiagData.chiefComplaint}
 【现病史】${wmDiagData.hpi||'未提供'}
 【既往史】${wmDiagData.pmh||'未提供'}
 【体格检查】${wmDiagData.pe||'未提供'}
 【化验】${wmDiagData.labs||'未提供'}
 【影像】${wmDiagData.imaging||'未提供'}
-${wmDiagData.attachments&&wmDiagData.attachments.length?'【附件说明】已上传'+wmDiagData.attachments.length+'个文件，包括图片中的化验单/影像报告，请仔细阅读图片内容进行分析。':''}
+${wmDiagData.attachments&&wmDiagData.attachments.length?'【附件说明】已上传'+wmDiagData.attachments.length+'个文件（含图片/视频），请仔细阅读图片内容辅助诊断分析。':''}
 
 请给出：1.初步诊断 2.鉴别诊断 3.诊断依据 4.建议进一步检查`;
 
-  // 构建多模态消息（如果有图片附件则用 vision 格式）
+  // 收集图片+视频帧
   const imageAttachs = (wmDiagData.attachments||[]).filter(f => f.type==='image' && f.data);
+  const videoAttachs = (wmDiagData.attachments||[]).filter(f => f.type==='video' && f.data);
+  let allVisuals = imageAttachs.map(i => i.data);
+  // 提取视频关键帧
+  if (videoAttachs.length && typeof wmExtractVideoFrames==='function') {
+    for (const v of videoAttachs) {
+      const frames = await wmExtractVideoFrames(v.data, 2);
+      allVisuals.push(...frames);
+    }
+  }
+
   let messages;
-  if (imageAttachs.length > 0) {
-    // 多模态格式：text + images
-    const userContent = [{type:'text', text:textPrompt}];
-    imageAttachs.slice(0, 5).forEach(img => {
-      userContent.push({type:'image_url', image_url:{url:img.data, detail:'high'}});
+  if (allVisuals.length > 0) {
+    // 多模态格式：system + user(text+images)
+    const userContent = [{type:'text', text:userText}];
+    allVisuals.slice(0, 8).forEach(img => {
+      userContent.push({type:'image_url', image_url:{url:img, detail:'high'}});
     });
-    messages = [{role:'user', content:userContent}];
+    messages = [{role:'system', content:sysPrompt}, {role:'user', content:userContent}];
   } else {
-    messages = [{role:'system', content:textPrompt}];
+    messages = [{role:'system', content:sysPrompt}, {role:'user', content:userText}];
   }
 
   try {
@@ -269,6 +280,11 @@ function wmPreviewAttach(idx) {
 
 // ========== AI图片/文档识别功能 ==========
 async function wmAiRecognizeImages(target) {
+  // 使用增强版识别（wm-vision.js）
+  if (typeof wmAiRecognizeImagesEnhanced === 'function') {
+    return wmAiRecognizeImagesEnhanced(target);
+  }
+  // 降级：原始识别逻辑
   if (!AI_CONFIG.apiKey) { alert('请先配置AI API Key'); return; }
   const images = (wmDiagData.attachments||[]).filter(f => f.type==='image' && f.data);
   if (!images.length) { alert('没有可识别的图片'); return; }
