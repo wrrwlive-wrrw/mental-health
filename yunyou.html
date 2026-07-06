@@ -278,10 +278,10 @@
       if (p !== p2) return alert('两次密码不一致');
       const users = yyGetUsers();
       if (users.find(x => x.username === u)) return alert('用户名已存在');
-      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, realName, birth, birthPlace, birthTime, createdAt: new Date().toISOString() };
+      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, realName, birth, birthPlace, birthTime, status: 'pending', createdAt: new Date().toISOString() };
       users.push(user);
       yySaveUsers(users);
-      alert('注册成功，请登录');
+      alert('注册成功！请等待管理员审批后方可登录。');
       yyShowLogin();
     }
 
@@ -293,6 +293,8 @@
       const users = yyGetUsers();
       const user = users.find(x => x.username === u && x.password === btoa(p));
       if (!user) return alert('用户名或密码错误');
+      if (user.status === 'pending') return alert('您的账号正在等待管理员审批，请稍后再试。');
+      if (user.status === 'rejected') return alert('您的注册申请已被拒绝，请联系管理员。');
       currentUser = { id: user.id, name: user.name, username: user.username, role: user.role };
       localStorage.setItem('yy_current', JSON.stringify(currentUser));
       yyEnterHome();
@@ -347,9 +349,16 @@
       if (!currentUser || currentUser.role !== 'admin') return alert('无权限');
       const users = yyGetUsers();
       const roleMap = {admin:'管理员',consultant:'咨询者',user:'用户',student:'用户'};
-      const rows = users.map((u,i) => `<tr>
+      const statusMap = {approved:'已通过',pending:'待审核',rejected:'已拒绝'};
+      const statusColor = {approved:'#81c784',pending:'#ffb74d',rejected:'#ef5350'};
+      const rows = users.map((u,i) => {
+        const st = u.status || 'approved';
+        const stLabel = `<span style="color:${statusColor[st]||'#90a4ae'};font-size:11px">${statusMap[st]||'已通过'}</span>`;
+        const approveBtn = st==='pending' ? `<button onclick="yyApproveUser(${i},'approved')" style="background:rgba(129,199,132,0.2);color:#81c784;border:1px solid rgba(129,199,132,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">通过</button><button onclick="yyApproveUser(${i},'rejected')" style="background:rgba(239,83,80,0.2);color:#ef5350;border:1px solid rgba(239,83,80,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">拒绝</button>` : '';
+        return `<tr>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">${u.name}</td>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">${u.username}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">${stLabel}</td>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
           <select onchange="yyChangeRole(${i},this.value)" style="background:rgba(255,255,255,0.1);color:#e0e0e0;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px">
             <option value="user" ${u.role==='user'||u.role==='student'?'selected':''}>用户</option>
@@ -357,14 +366,14 @@
             <option value="admin" ${u.role==='admin'?'selected':''}>管理员</option>
           </select></td>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
-          <button onclick="yyViewHealth('${u.id}')" style="background:rgba(100,181,246,0.2);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">记录</button>
+          ${approveBtn}<button onclick="yyViewHealth('${u.id}')" style="background:rgba(100,181,246,0.2);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">记录</button>
           <button onclick="yyResetPwd(${i})" style="background:rgba(255,183,77,0.2);color:#ffb74d;border:1px solid rgba(255,183,77,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">改密</button>
           <button onclick="yyDeleteUser(${i})" style="background:rgba(239,83,80,0.2);color:#ef5350;border:1px solid rgba(239,83,80,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">删除</button></td>
-      </tr>`).join('');
+      </tr>`; }).join('');
       const html = `<div style="padding:20px;color:#e0e0e0">
         <h3 style="margin:0 0 14px;color:#64b5f6">📋 用户管理（共${users.length}人）</h3>
         <table style="width:100%;font-size:12px;border-collapse:collapse">
-          <tr style="color:#90a4ae"><th style="text-align:left;padding:6px 8px">昵称</th><th style="text-align:left;padding:6px 8px">账号</th><th style="text-align:left;padding:6px 8px">角色</th><th style="padding:6px 8px">操作</th></tr>
+          <tr style="color:#90a4ae"><th style="text-align:left;padding:6px 8px">昵称</th><th style="text-align:left;padding:6px 8px">账号</th><th style="text-align:left;padding:6px 8px">状态</th><th style="text-align:left;padding:6px 8px">角色</th><th style="padding:6px 8px">操作</th></tr>
           ${rows}
         </table>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
@@ -402,6 +411,12 @@
       const users = yyGetUsers();
       if (users[idx]) { users[idx].role = role; yySaveUsers(users); }
     }
+    function yyApproveUser(idx, status) {
+      const users = yyGetUsers();
+      if (users[idx]) { users[idx].status = status; yySaveUsers(users); }
+      document.getElementById('yyAdminOverlay')?.remove();
+      yyShowAdmin();
+    }
     function yyDeleteUser(idx) {
       if (!confirm('确认删除该用户？')) return;
       const users = yyGetUsers();
@@ -430,7 +445,7 @@
       if (!p || p.length < 6) return alert('密码至少6位');
       const users = yyGetUsers();
       if (users.find(x => x.username === u)) return alert('用户名已存在');
-      users.push({ id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role, realName, birth, birthPlace, birthTime, createdAt: new Date().toISOString() });
+      users.push({ id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role, realName, birth, birthPlace, birthTime, status: 'approved', createdAt: new Date().toISOString() });
       yySaveUsers(users);
       document.getElementById('yyAdminOverlay')?.remove();
       yyShowAdmin();
