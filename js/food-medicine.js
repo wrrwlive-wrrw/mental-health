@@ -1,6 +1,7 @@
 // 药食同源模块 - 主入口
 const FOOD_MEDICINE_MODULES = {
   overview: {name:'药食同源',icon:'🍲',desc:'食疗养生理念与分类总览'},
+  season:   {name:'四季养生',icon:'🌿',desc:'根据四季时令结合体质定制食疗方案'},
   regional: {name:'各地美食',icon:'🗺️',desc:'各地药膳美食、吃法与搭配'},
   immunity: {name:'免疫力食谱',icon:'💪',desc:'提升免疫力的食物组合方案'},
   tea:      {name:'养生茶饮',icon:'🍵',desc:'养生茶介绍、配方与饮用指导'},
@@ -37,6 +38,7 @@ function switchFmTab(tab) {
 function showFmTab(tab) {
   switch(tab) {
     case 'overview': return renderFmOverview();
+    case 'season': return typeof renderFmSeason==='function'?renderFmSeason():'<p>四季模块加载中...</p>';
     case 'regional': return renderFmRegional();
     case 'immunity': return renderFmImmunity();
     case 'tea': return renderFmTea();
