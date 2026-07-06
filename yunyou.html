@@ -335,6 +335,7 @@
             <option value="admin" ${u.role==='admin'?'selected':''}>管理员</option>
           </select></td>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
+          <button onclick="yyViewHealth('${u.id}')" style="background:rgba(100,181,246,0.2);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">记录</button>
           <button onclick="yyDeleteUser(${i})" style="background:rgba(239,83,80,0.2);color:#ef5350;border:1px solid rgba(239,83,80,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">删除</button></td>
       </tr>`).join('');
       const html = `<div style="padding:20px;color:#e0e0e0">
@@ -394,6 +395,100 @@
       yySaveUsers(users);
       document.getElementById('yyAdminOverlay')?.remove();
       yyShowAdmin();
+    }
+
+    // 查看用户健康记录
+    function yyViewHealth(userId) {
+      const users = yyGetUsers();
+      const user = users.find(u => u.id === userId);
+      if (!user) return alert('用户不存在');
+      const tcmData = yyGetTcmRecords(userId, user.name);
+      const wmData = yyGetWmRecords(userId, user.name);
+      const fmData = yyGetFmRecords(userId, user.name);
+      const fsData = yyGetFsRecords(userId, user.name);
+      const html = `<div style="padding:20px;color:#e0e0e0">
+        <h3 style="margin:0 0 14px;color:#64b5f6">📋 ${user.name} 的健康记录</h3>
+        <div style="margin-bottom:14px">
+          <h4 style="color:#81c784;margin:0 0 8px">🏥 中医诊疗记录</h4>
+          ${tcmData || '<p style="color:#78909c;font-size:12px">暂无记录</p>'}
+        </div>
+        <div style="margin-bottom:14px">
+          <h4 style="color:#64b5f6;margin:0 0 8px">🏨 西医诊疗记录</h4>
+          ${wmData || '<p style="color:#78909c;font-size:12px">暂无记录</p>'}
+        </div>
+        <div style="margin-bottom:14px">
+          <h4 style="color:#ffb74d;margin:0 0 8px">🍲 药食同源档案</h4>
+          ${fmData || '<p style="color:#78909c;font-size:12px">暂无记录</p>'}
+        </div>
+        <div>
+          <h4 style="color:#ce93d8;margin:0 0 8px">🧿 风水健康日志</h4>
+          ${fsData || '<p style="color:#78909c;font-size:12px">暂无记录</p>'}
+        </div>
+      </div>`;
+      document.getElementById('yyAdminOverlay')?.remove();
+      const overlay = document.createElement('div');
+      overlay.id = 'yyAdminOverlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+      overlay.innerHTML = `<div style="background:#1b2838;border:1px solid rgba(255,255,255,0.15);border-radius:14px;max-width:600px;width:94%;max-height:85vh;overflow-y:auto;position:relative">
+        <span onclick="document.getElementById('yyAdminOverlay').remove()" style="position:absolute;top:10px;right:14px;font-size:20px;cursor:pointer;color:#999">×</span>
+        ${html}</div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    }
+
+    // 读取中医记录
+    function yyGetTcmRecords(userId, userName) {
+      const patients = JSON.parse(localStorage.getItem('tcm_patients') || '[]');
+      const p = patients.find(x => x.name === userName || x.id === userId);
+      if (!p || !p.records || !p.records.length) return '';
+      return `<p style="font-size:11px;color:#90a4ae;margin-bottom:6px">体质：${p.constitution||'未填'} | 过敏：${p.allergies||'无'} | 慢性病：${p.chronicDiseases||'无'}</p>` +
+        p.records.slice(-5).map(r => `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px;margin-bottom:6px;font-size:11px">
+          <span style="color:#81c784">${r.date}</span> ${r.chiefComplaint?'主诉：'+r.chiefComplaint:''} ${r.syndrome?'<br>辨证：'+r.syndrome:''}
+        </div>`).join('');
+    }
+
+    // 读取西医记录
+    function yyGetWmRecords(userId, userName) {
+      const patients = JSON.parse(localStorage.getItem('tcm_patients') || '[]');
+      const p = patients.find(x => x.name === userName || x.id === userId);
+      if (!p) return '';
+      const records = JSON.parse(localStorage.getItem('wm_records_' + p.id) || '[]');
+      const ext = JSON.parse(localStorage.getItem('wm_ext_' + p.id) || '{}');
+      let info = '';
+      if (ext.bloodType || ext.height || ext.weight) {
+        info = `<p style="font-size:11px;color:#90a4ae;margin-bottom:6px">血型：${ext.bloodType||'-'} | 身高：${ext.height||'-'}cm | 体重：${ext.weight||'-'}kg</p>`;
+      }
+      if (!records.length && !info) return '';
+      return info + records.slice(-5).map(r => `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px;margin-bottom:6px;font-size:11px">
+        <span style="color:#64b5f6">${r.date}</span> ${r.diagnosis?'诊断：'+r.diagnosis:''}
+      </div>`).join('');
+    }
+
+    // 读取药食同源档案
+    function yyGetFmRecords(userId, userName) {
+      const profiles = JSON.parse(localStorage.getItem('fm_profiles') || '[]');
+      const p = profiles.find(x => x.name === userName || x.id === userId);
+      if (!p) return '';
+      let info = `<p style="font-size:11px;color:#90a4ae;margin-bottom:6px">体质：${p.constitution||'未填'} | 偏好：${p.dietPreference||'-'} | 目标：${p.goal||'-'}</p>`;
+      if (p.records && p.records.length) {
+        info += p.records.slice(-5).map(r => `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px;margin-bottom:6px;font-size:11px">
+          <span style="color:#ffb74d">${r.date?.slice(0,10)||''}</span> [${r.type||''}] ${r.content?.slice(0,60)||''}
+        </div>`).join('');
+      }
+      return info;
+    }
+
+    // 读取风水健康日志
+    function yyGetFsRecords(userId, userName) {
+      const records = JSON.parse(localStorage.getItem('fs_health_records') || '[]');
+      const persons = JSON.parse(localStorage.getItem('fs_health_persons') || '[]');
+      const person = persons.find(x => x.name === userName);
+      if (!person) return '';
+      const pRecords = records.filter(r => r.personId === person.id).slice(-5);
+      if (!pRecords.length) return '';
+      return pRecords.map(r => `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px;margin-bottom:6px;font-size:11px">
+        <span style="color:#ce93d8">${r.date}</span> 症状：${r.symptom||'-'} | 情绪：${r.mood||'-'} | 睡眠：${r.sleep||'-'}
+      </div>`).join('');
     }
 
     // 兼容其他模块调用
