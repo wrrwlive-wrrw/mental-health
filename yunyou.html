@@ -343,6 +343,20 @@
           <tr style="color:#90a4ae"><th style="text-align:left;padding:6px 8px">昵称</th><th style="text-align:left;padding:6px 8px">账号</th><th style="text-align:left;padding:6px 8px">角色</th><th style="padding:6px 8px">操作</th></tr>
           ${rows}
         </table>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1)">
+          <h4 style="margin:0 0 10px;color:#81c784;font-size:13px">➕ 添加用户</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input id="yyAdmAddUser" placeholder="用户名" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <input id="yyAdmAddPwd" placeholder="密码" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <input id="yyAdmAddName" placeholder="昵称（可选）" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <select id="yyAdmAddRole" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+              <option value="user">普通用户</option>
+              <option value="consultant">咨询者</option>
+              <option value="admin">管理员</option>
+            </select>
+          </div>
+          <button onclick="yyAdminAddUser()" style="margin-top:10px;width:100%;padding:8px;background:rgba(129,199,132,0.2);color:#81c784;border:1px solid rgba(129,199,132,0.3);border-radius:6px;cursor:pointer;font-size:12px">确认添加</button>
+        </div>
       </div>`;
       const overlay = document.createElement('div');
       overlay.id = 'yyAdminOverlay';
@@ -363,6 +377,20 @@
       const users = yyGetUsers();
       if (users[idx]?.id === currentUser?.id) return alert('不能删除自己');
       users.splice(idx, 1);
+      yySaveUsers(users);
+      document.getElementById('yyAdminOverlay')?.remove();
+      yyShowAdmin();
+    }
+    function yyAdminAddUser() {
+      const u = document.getElementById('yyAdmAddUser').value.trim();
+      const p = document.getElementById('yyAdmAddPwd').value.trim();
+      const name = document.getElementById('yyAdmAddName').value.trim();
+      const role = document.getElementById('yyAdmAddRole').value;
+      if (!u || u.length < 2) return alert('用户名至少2位');
+      if (!p || p.length < 6) return alert('密码至少6位');
+      const users = yyGetUsers();
+      if (users.find(x => x.username === u)) return alert('用户名已存在');
+      users.push({ id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, createdAt: new Date().toISOString() });
       yySaveUsers(users);
       document.getElementById('yyAdminOverlay')?.remove();
       yyShowAdmin();
