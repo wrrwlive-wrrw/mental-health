@@ -4,7 +4,9 @@ const FOOD_MEDICINE_MODULES = {
   regional: {name:'各地美食',icon:'🗺️',desc:'各地药膳美食、吃法与搭配'},
   immunity: {name:'免疫力食谱',icon:'💪',desc:'提升免疫力的食物组合方案'},
   tea:      {name:'养生茶饮',icon:'🍵',desc:'养生茶介绍、配方与饮用指导'},
-  organ:    {name:'脏腑食疗',icon:'🫁',desc:'肺肝脾胃专属茶饮与药膳配方'}
+  organ:    {name:'脏腑食疗',icon:'🫁',desc:'肺肝脾胃专属茶饮与药膳配方'},
+  ai:       {name:'AI食疗师',icon:'🤖',desc:'AI智能诊断提供个性化食疗方案'},
+  profile:  {name:'健康档案',icon:'🏥',desc:'健康档案管理与跨模块数据同步'}
 };
 let fmCurrentTab = 'overview';
 
@@ -39,6 +41,8 @@ function showFmTab(tab) {
     case 'immunity': return renderFmImmunity();
     case 'tea': return renderFmTea();
     case 'organ': return renderFmOrgan();
+    case 'ai': return typeof renderFmAi==='function'?renderFmAi():'<p>AI模块加载中...</p>';
+    case 'profile': return typeof renderFmProfile==='function'?renderFmProfile():'<p>档案模块加载中...</p>';
     default: return '';
   }
 }
