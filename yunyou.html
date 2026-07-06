@@ -103,6 +103,11 @@
           <input class="yy-input" id="yyRegPwd" type="password" placeholder="密码（6位以上）" autocomplete="new-password">
           <input class="yy-input" id="yyRegPwd2" type="password" placeholder="确认密码" autocomplete="new-password">
           <input class="yy-input" id="yyRegName" placeholder="昵称（可选）">
+          <select class="yy-input" id="yyRegRole">
+            <option value="user">普通用户</option>
+            <option value="consultant">咨询者（健康顾问）</option>
+            <option value="admin">管理员</option>
+          </select>
           <button class="yy-login-btn" onclick="yyRegister()">注 册</button>
           <div class="yy-switch"><a onclick="yyShowLogin()">已有账号？返回登录</a></div>
         </div>
@@ -240,12 +245,13 @@
       const p = document.getElementById('yyRegPwd').value;
       const p2 = document.getElementById('yyRegPwd2').value;
       const name = document.getElementById('yyRegName').value.trim();
+      const role = document.getElementById('yyRegRole').value;
       if (!u || u.length < 2 || u.length > 16) return alert('用户名需2-16位');
       if (!p || p.length < 6) return alert('密码需6位以上');
       if (p !== p2) return alert('两次密码不一致');
       const users = yyGetUsers();
       if (users.find(x => x.username === u)) return alert('用户名已存在');
-      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: 'student', createdAt: new Date().toISOString() };
+      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, createdAt: new Date().toISOString() };
       users.push(user);
       yySaveUsers(users);
       alert('注册成功，请登录');
@@ -292,7 +298,10 @@
         const header = document.querySelector('#yyHome .yy-header');
         if (header) header.parentNode.insertBefore(bar, header);
       }
-      bar.innerHTML = `<span>👤 ${currentUser ? currentUser.name : '未登录'}</span><button onclick="yyLogout()">退出登录</button>`;
+      const roleMap = {admin:'管理员',consultant:'咨询者',user:'用户',student:'用户'};
+      const roleLabel = roleMap[currentUser?.role] || '用户';
+      const adminBtn = currentUser?.role==='admin' ? '<button onclick="yyShowAdmin()" style="margin-right:6px;background:rgba(100,181,246,0.2);color:#64b5f6;border-color:rgba(100,181,246,0.3)">管理面板</button>' : '';
+      bar.innerHTML = `<span>👤 ${currentUser?currentUser.name:'未登录'} <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(206,147,216,0.2);color:#ce93d8">${roleLabel}</span></span><span>${adminBtn}<button onclick="yyLogout()">退出登录</button></span>`;
     }
 
     // 自动登录检查
@@ -305,6 +314,54 @@
         } catch(e) { localStorage.removeItem('yy_current'); }
       }
     })();
+
+    // 管理员面板
+    function yyShowAdmin() {
+      if (!currentUser || currentUser.role !== 'admin') return alert('无权限');
+      const users = yyGetUsers();
+      const roleMap = {admin:'管理员',consultant:'咨询者',user:'用户',student:'用户'};
+      const rows = users.map((u,i) => `<tr>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">${u.name}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">${u.username}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
+          <select onchange="yyChangeRole(${i},this.value)" style="background:rgba(255,255,255,0.1);color:#e0e0e0;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px">
+            <option value="user" ${u.role==='user'||u.role==='student'?'selected':''}>用户</option>
+            <option value="consultant" ${u.role==='consultant'?'selected':''}>咨询者</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>管理员</option>
+          </select></td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
+          <button onclick="yyDeleteUser(${i})" style="background:rgba(239,83,80,0.2);color:#ef5350;border:1px solid rgba(239,83,80,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">删除</button></td>
+      </tr>`).join('');
+      const html = `<div style="padding:20px;color:#e0e0e0">
+        <h3 style="margin:0 0 14px;color:#64b5f6">📋 用户管理（共${users.length}人）</h3>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr style="color:#90a4ae"><th style="text-align:left;padding:6px 8px">昵称</th><th style="text-align:left;padding:6px 8px">账号</th><th style="text-align:left;padding:6px 8px">角色</th><th style="padding:6px 8px">操作</th></tr>
+          ${rows}
+        </table>
+      </div>`;
+      const overlay = document.createElement('div');
+      overlay.id = 'yyAdminOverlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+      overlay.innerHTML = `<div style="background:#1b2838;border:1px solid rgba(255,255,255,0.15);border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow-y:auto;position:relative">
+        <span onclick="document.getElementById('yyAdminOverlay').remove()" style="position:absolute;top:10px;right:14px;font-size:20px;cursor:pointer;color:#999">×</span>
+        ${html}</div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    }
+
+    function yyChangeRole(idx, role) {
+      const users = yyGetUsers();
+      if (users[idx]) { users[idx].role = role; yySaveUsers(users); }
+    }
+    function yyDeleteUser(idx) {
+      if (!confirm('确认删除该用户？')) return;
+      const users = yyGetUsers();
+      if (users[idx]?.id === currentUser?.id) return alert('不能删除自己');
+      users.splice(idx, 1);
+      yySaveUsers(users);
+      document.getElementById('yyAdminOverlay')?.remove();
+      yyShowAdmin();
+    }
 
     // 兼容其他模块调用
     function checkAuth() {}
