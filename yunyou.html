@@ -103,6 +103,24 @@
           <input class="yy-input" id="yyRegPwd" type="password" placeholder="密码（6位以上）" autocomplete="new-password">
           <input class="yy-input" id="yyRegPwd2" type="password" placeholder="确认密码" autocomplete="new-password">
           <input class="yy-input" id="yyRegName" placeholder="昵称（可选）">
+          <input class="yy-input" id="yyRegRealName" placeholder="真实姓名">
+          <input class="yy-input" id="yyRegBirth" type="month" placeholder="出生年月" style="color:#90a4ae">
+          <input class="yy-input" id="yyRegBirthPlace" placeholder="出生地（如：北京市）">
+          <select class="yy-input" id="yyRegBirthTime">
+            <option value="">出生时辰（可选）</option>
+            <option value="子">子时（23:00-01:00）</option>
+            <option value="丑">丑时（01:00-03:00）</option>
+            <option value="寅">寅时（03:00-05:00）</option>
+            <option value="卯">卯时（05:00-07:00）</option>
+            <option value="辰">辰时（07:00-09:00）</option>
+            <option value="巳">巳时（09:00-11:00）</option>
+            <option value="午">午时（11:00-13:00）</option>
+            <option value="未">未时（13:00-15:00）</option>
+            <option value="申">申时（15:00-17:00）</option>
+            <option value="酉">酉时（17:00-19:00）</option>
+            <option value="戌">戌时（19:00-21:00）</option>
+            <option value="亥">亥时（21:00-23:00）</option>
+          </select>
           <select class="yy-input" id="yyRegRole">
             <option value="user">普通用户</option>
             <option value="consultant">咨询者（健康顾问）</option>
@@ -250,13 +268,17 @@
       const p = document.getElementById('yyRegPwd').value;
       const p2 = document.getElementById('yyRegPwd2').value;
       const name = document.getElementById('yyRegName').value.trim();
+      const realName = document.getElementById('yyRegRealName').value.trim();
+      const birth = document.getElementById('yyRegBirth').value;
+      const birthPlace = document.getElementById('yyRegBirthPlace').value.trim();
+      const birthTime = document.getElementById('yyRegBirthTime').value;
       const role = document.getElementById('yyRegRole').value;
       if (!u || u.length < 2 || u.length > 16) return alert('用户名需2-16位');
       if (!p || p.length < 6) return alert('密码需6位以上');
       if (p !== p2) return alert('两次密码不一致');
       const users = yyGetUsers();
       if (users.find(x => x.username === u)) return alert('用户名已存在');
-      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, createdAt: new Date().toISOString() };
+      const user = { id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, realName, birth, birthPlace, birthTime, createdAt: new Date().toISOString() };
       users.push(user);
       yySaveUsers(users);
       alert('注册成功，请登录');
@@ -336,6 +358,7 @@
           </select></td>
         <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.1)">
           <button onclick="yyViewHealth('${u.id}')" style="background:rgba(100,181,246,0.2);color:#64b5f6;border:1px solid rgba(100,181,246,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">记录</button>
+          <button onclick="yyResetPwd(${i})" style="background:rgba(255,183,77,0.2);color:#ffb74d;border:1px solid rgba(255,183,77,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;margin-right:4px">改密</button>
           <button onclick="yyDeleteUser(${i})" style="background:rgba(239,83,80,0.2);color:#ef5350;border:1px solid rgba(239,83,80,0.3);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px">删除</button></td>
       </tr>`).join('');
       const html = `<div style="padding:20px;color:#e0e0e0">
@@ -349,7 +372,13 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <input id="yyAdmAddUser" placeholder="用户名" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
             <input id="yyAdmAddPwd" placeholder="密码" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
-            <input id="yyAdmAddName" placeholder="昵称（可选）" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <input id="yyAdmAddName" placeholder="昵称" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <input id="yyAdmAddRealName" placeholder="真实姓名" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <input id="yyAdmAddBirth" type="month" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#90a4ae;font-size:12px">
+            <input id="yyAdmAddBirthPlace" placeholder="出生地" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+            <select id="yyAdmAddBirthTime" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
+              <option value="">出生时辰</option><option value="子">子时</option><option value="丑">丑时</option><option value="寅">寅时</option><option value="卯">卯时</option><option value="辰">辰时</option><option value="巳">巳时</option><option value="午">午时</option><option value="未">未时</option><option value="申">申时</option><option value="酉">酉时</option><option value="戌">戌时</option><option value="亥">亥时</option>
+            </select>
             <select id="yyAdmAddRole" style="padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#e0e0e0;font-size:12px">
               <option value="user">普通用户</option>
               <option value="consultant">咨询者</option>
@@ -382,16 +411,26 @@
       document.getElementById('yyAdminOverlay')?.remove();
       yyShowAdmin();
     }
+    function yyResetPwd(idx) {
+      const newPwd = prompt('请输入新密码（6位以上）：');
+      if (!newPwd || newPwd.length < 6) return alert('密码需6位以上');
+      const users = yyGetUsers();
+      if (users[idx]) { users[idx].password = btoa(newPwd); yySaveUsers(users); alert('密码已修改'); }
+    }
     function yyAdminAddUser() {
       const u = document.getElementById('yyAdmAddUser').value.trim();
       const p = document.getElementById('yyAdmAddPwd').value.trim();
       const name = document.getElementById('yyAdmAddName').value.trim();
+      const realName = document.getElementById('yyAdmAddRealName').value.trim();
+      const birth = document.getElementById('yyAdmAddBirth').value;
+      const birthPlace = document.getElementById('yyAdmAddBirthPlace').value.trim();
+      const birthTime = document.getElementById('yyAdmAddBirthTime').value;
       const role = document.getElementById('yyAdmAddRole').value;
       if (!u || u.length < 2) return alert('用户名至少2位');
       if (!p || p.length < 6) return alert('密码至少6位');
       const users = yyGetUsers();
       if (users.find(x => x.username === u)) return alert('用户名已存在');
-      users.push({ id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role: role, createdAt: new Date().toISOString() });
+      users.push({ id: 'yy_' + Date.now(), username: u, password: btoa(p), name: name || u, role, realName, birth, birthPlace, birthTime, createdAt: new Date().toISOString() });
       yySaveUsers(users);
       document.getElementById('yyAdminOverlay')?.remove();
       yyShowAdmin();
@@ -408,6 +447,9 @@
       const fsData = yyGetFsRecords(userId, user.name);
       const html = `<div style="padding:20px;color:#e0e0e0">
         <h3 style="margin:0 0 14px;color:#64b5f6">📋 ${user.name} 的健康记录</h3>
+        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:2">
+          <b>姓名：</b>${user.realName||user.name} &nbsp; <b>出生年月：</b>${user.birth||'未填'} &nbsp; <b>出生地：</b>${user.birthPlace||'未填'} &nbsp; <b>时辰：</b>${user.birthTime?user.birthTime+'时':'未填'}
+        </div>
         <div style="margin-bottom:14px">
           <h4 style="color:#81c784;margin:0 0 8px">🏥 中医诊疗记录</h4>
           ${tcmData || '<p style="color:#78909c;font-size:12px">暂无记录</p>'}
