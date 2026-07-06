@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="云游四海">
+  <meta name="theme-color" content="#1a237e">
+  <title>云游四海 海阔天空</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/fengshui-lab.css">
+  <link rel="stylesheet" href="css/fengshui-lab2.css">
+  <link rel="stylesheet" href="css/tcm.css">
+  <link rel="stylesheet" href="css/wm.css">
+  <link rel="stylesheet" href="css/food-medicine.css">
+  <style>
+    body { background: linear-gradient(135deg, #0d1b2a 0%, #1b2838 50%, #1a237e 100%); min-height: 100vh; }
+    .yy-header { text-align:center; padding:30px 20px 20px; }
+    .yy-title { font-size:28px; font-weight:bold; color:#e0e0e0;
+      background:linear-gradient(90deg,#64b5f6,#ce93d8,#ffab91);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      text-shadow:none; margin:0; }
+    .yy-subtitle { font-size:14px; color:#90a4ae; margin-top:8px; letter-spacing:2px; }
+    .yy-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px;
+      padding:0 16px; max-width:800px; margin:20px auto; }
+    .yy-card { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+      border-radius:16px; padding:24px 16px; text-align:center; cursor:pointer;
+      transition:all .3s; backdrop-filter:blur(10px); }
+    .yy-card:hover { transform:translateY(-4px); background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.25); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+    .yy-card-icon { font-size:42px; margin-bottom:12px; }
+    .yy-card-title { font-size:16px; font-weight:bold; color:#e0e0e0; margin-bottom:8px; }
+    .yy-card-desc { font-size:12px; color:#90a4ae; line-height:1.6; }
+    .yy-card-tags { margin-top:10px; display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+    .yy-tag { font-size:10px; padding:2px 8px; border-radius:10px; }
+    .yy-tag-blue { background:rgba(100,181,246,0.2); color:#64b5f6; }
+    .yy-tag-green { background:rgba(129,199,132,0.2); color:#81c784; }
+    .yy-tag-orange { background:rgba(255,183,77,0.2); color:#ffb74d; }
+    .yy-tag-purple { background:rgba(206,147,216,0.2); color:#ce93d8; }
+    .yy-footer { text-align:center; padding:30px 16px; color:#546e7a; font-size:11px; }
+    .yy-back { position:fixed; top:12px; left:12px; background:rgba(255,255,255,0.1);
+      border:1px solid rgba(255,255,255,0.2); color:#90a4ae; border-radius:8px;
+      padding:6px 14px; font-size:12px; cursor:pointer; z-index:999;
+      backdrop-filter:blur(5px); display:none; }
+    .yy-back:hover { background:rgba(255,255,255,0.2); color:#fff; }
+    .yy-page { display:none; }
+    .yy-page.active { display:block; }
+    #yyHome { display:block; }
+    .container { max-width:900px; margin:0 auto; }
+  </style>
+</head>
+<body>
+  <button class="yy-back" id="yyBackBtn" onclick="yyGoHome()">← 返回</button>
+  <div class="container">
+    <!-- 首页 -->
+    <div id="yyHome" class="yy-page active">
+      <div class="yy-header">
+        <h1 class="yy-title">云游四海 海阔天空</h1>
+        <p class="yy-subtitle">传统智慧 · 现代科技 · 养生之道</p>
+      </div>
+      <div class="yy-grid">
+        <div class="yy-card" onclick="yyShowPage('fengshui');renderFengshui()">
+          <div class="yy-card-icon">🧿</div>
+          <div class="yy-card-title">风水大师</div>
+          <div class="yy-card-desc">易经、紫微斗数、四柱八字、麻衣神相、玉匣记古籍智慧</div>
+          <div class="yy-card-tags">
+            <span class="yy-tag yy-tag-purple">传统文化</span>
+            <span class="yy-tag yy-tag-orange">5大板块</span>
+          </div>
+        </div>
+        <div class="yy-card" onclick="yyShowPage('tcm');renderTcm()">
+          <div class="yy-card-icon">🏥</div>
+          <div class="yy-card-title">中医智能诊疗</div>
+          <div class="yy-card-desc">望闻问切四诊合参，AI辨证施治，经方用药指导</div>
+          <div class="yy-card-tags">
+            <span class="yy-tag yy-tag-green">四诊合参</span>
+            <span class="yy-tag yy-tag-orange">辨证施治</span>
+          </div>
+        </div>
+        <div class="yy-card" onclick="yyShowPage('wm');renderWm()">
+          <div class="yy-card-icon">🏨</div>
+          <div class="yy-card-title">西医智能诊疗</div>
+          <div class="yy-card-desc">循证医学AI辅助诊断，化验单解读，中西医结合分析</div>
+          <div class="yy-card-tags">
+            <span class="yy-tag yy-tag-blue">循证医学</span>
+            <span class="yy-tag yy-tag-orange">中西结合</span>
+          </div>
+        </div>
+        <div class="yy-card" onclick="yyShowPage('foodMedicine');renderFoodMedicine()">
+          <div class="yy-card-icon">🍲</div>
+          <div class="yy-card-title">药食同源</div>
+          <div class="yy-card-desc">各地药膳美食、四季养生茶饮、免疫力食谱、AI食疗师</div>
+          <div class="yy-card-tags">
+            <span class="yy-tag yy-tag-green">药膳食疗</span>
+            <span class="yy-tag yy-tag-orange">四季养生</span>
+          </div>
+        </div>
+      </div>
+      <div class="yy-footer">
+        <p>云游四海 · 海阔天空 — 融合传统智慧与现代AI技术的健康平台</p>
+      </div>
+    </div>
+
+    <!-- 风水大师页 -->
+    <div id="fengshui" class="yy-page">
+      <div class="card">
+        <h2 style="text-align:center;color:#8b6914;margin-bottom:20px">🧿 风水大师</h2>
+        <div id="fengshuiContent"></div>
+      </div>
+    </div>
+
+    <!-- 中医智能诊疗页 -->
+    <div id="tcm" class="yy-page">
+      <div class="card">
+        <h2 style="text-align:center;color:#2e7d32;margin-bottom:20px">🏥 中医智能诊疗</h2>
+        <div id="tcmContent"></div>
+      </div>
+    </div>
+
+    <!-- 西医智能诊疗页 -->
+    <div id="wm" class="yy-page">
+      <div class="card">
+        <h2 style="text-align:center;color:#1565c0;margin-bottom:20px">🏨 西医智能诊疗</h2>
+        <div id="wmContent"></div>
+      </div>
+    </div>
+
+    <!-- 药食同源页 -->
+    <div id="foodMedicine" class="yy-page">
+      <div class="card">
+        <h2 style="text-align:center;color:#8b4513;margin-bottom:20px">🍲 药食同源</h2>
+        <div id="foodMedicineContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心脚本 -->
+  <script src="js/chat.js"></script>
+  <script src="js/user.js"></script>
+
+  <!-- 风水模块 -->
+  <script src="js/fengshui-user.js"></script>
+  <script src="js/fengshui-ai.js"></script>
+  <script src="js/fengshui-face.js"></script>
+  <script src="js/fengshui-ziwei.js"></script>
+  <script src="js/fengshui-bazi.js"></script>
+  <script src="js/fengshui-divination.js"></script>
+  <script src="js/fengshui-health.js"></script>
+  <script src="js/fengshui-books.js"></script>
+  <script src="js/fengshui-books-cases.js"></script>
+  <script src="js/fengshui-jinpingmei.js"></script>
+  <script src="js/fengshui.js"></script>
+
+  <!-- 中医模块 -->
+  <script src="js/tcm-patient.js"></script>
+  <script src="js/tcm-data.js"></script>
+  <script src="js/tcm-classics.js"></script>
+  <script src="js/tcm-classics-data.js"></script>
+  <script src="js/tcm-classics-data2.js"></script>
+  <script src="js/tcm-classics-data3.js"></script>
+  <script src="js/tcm-diagnosis.js"></script>
+  <script src="js/tcm-prescription.js"></script>
+  <script src="js/tcm-prompt.js"></script>
+  <script src="js/tcm-ai.js"></script>
+  <script src="js/tcm-camera.js"></script>
+  <script src="js/tcm-acupoint.js"></script>
+  <script src="js/tcm.js"></script>
+
+  <!-- 西医模块 -->
+  <script src="js/wm-patient.js"></script>
+  <script src="js/wm-prompt.js"></script>
+  <script src="js/wm-vision.js"></script>
+  <script src="js/wm-agent.js"></script>
+  <script src="js/wm-diagnosis.js"></script>
+  <script src="js/wm-integrate.js"></script>
+  <script src="js/wm.js"></script>
+
+  <!-- 药食同源模块 -->
+  <script src="js/food-medicine-data.js"></script>
+  <script src="js/food-medicine-organ.js"></script>
+  <script src="js/food-medicine-season.js"></script>
+  <script src="js/food-medicine-season-render.js"></script>
+  <script src="js/food-medicine-profile.js"></script>
+  <script src="js/food-medicine-ai.js"></script>
+  <script src="js/food-medicine.js"></script>
+
+  <!-- 页面导航脚本 -->
+  <script>
+    // 云游四海页面切换
+    function yyShowPage(pageId) {
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      document.getElementById('yyBackBtn').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+    function yyGoHome() {
+      document.querySelectorAll('.yy-page').forEach(p => p.classList.remove('active'));
+      document.getElementById('yyHome').classList.add('active');
+      document.getElementById('yyBackBtn').style.display = 'none';
+      window.scrollTo(0, 0);
+    }
+    // 兼容原有 showPage（部分模块内部调用）
+    function showPage(pageId) {
+      if (pageId === 'home') { yyGoHome(); return; }
+      yyShowPage(pageId);
+    }
+    // 模拟 currentUser（部分模块需要）
+    let currentUser = { id:'yy_user', name:'云游客', phone:'', role:'student' };
+    // 初始化
+    window.onload = function() {
+      document.getElementById('yyHome').classList.add('active');
+    };
+  </script>
+</body>
+</html>
