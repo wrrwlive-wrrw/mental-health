@@ -98,28 +98,45 @@ function renderFmImmunity() {
 }
 
 function renderFmTea() {
-  const cats = ['全部','明目','补气','安神','清热','消食','驱寒','降脂','润喉','暖胃','理气'];
+  const cats = ['全部','明目','补气','安神','清热','消食','驱寒','降脂','润喉','暖胃','理气','疏肝','防风','生津','祛湿','清心','润肺','养阴','暖宫','补肾'];
+  const seasons = ['全部','春','夏','秋','冬'];
   return `<div>
-    <p style="font-size:12px;color:#666;margin-bottom:12px">养生茶饮简便易行，适合学生日常饮用。根据体质和需求选择合适的茶饮，注意禁忌。</p>
-    <div class="fm-filter" id="fmTeaFilter">
-      ${cats.map(c=>`<button class="fm-filter-btn ${c==='全部'?'active':''}" onclick="fmFilterTea('${c}')">${c}</button>`).join('')}
+    <p style="font-size:12px;color:#666;margin-bottom:12px">养生茶饮简便易行，适合学生日常饮用。可按功效或四季筛选，根据体质和时令选择合适茶饮。</p>
+    <div style="margin-bottom:8px">
+      <span style="font-size:12px;color:#8b4513;font-weight:bold">🌿 按季节：</span>
+      <div class="fm-filter" id="fmTeaSeasonFilter" style="display:inline-flex;gap:4px;flex-wrap:wrap">
+        ${seasons.map(s=>`<button class="fm-filter-btn ${s==='全部'?'active':''}" onclick="fmFilterTeaBySeason('${s}')">${s==='全部'?'全部':({'春':'🌸春','夏':'☀️夏','秋':'🍂秋','冬':'❄️冬'}[s])}</button>`).join('')}
+      </div>
     </div>
-    <div id="fmTeaList">${renderFmTeaList('全部')}</div>
+    <div style="margin-bottom:10px">
+      <span style="font-size:12px;color:#8b4513;font-weight:bold">💊 按功效：</span>
+      <div class="fm-filter" id="fmTeaFilter" style="display:inline-flex;gap:4px;flex-wrap:wrap">
+        ${cats.map(c=>`<button class="fm-filter-btn ${c==='全部'?'active':''}" onclick="fmFilterTea('${c}')">${c}</button>`).join('')}
+      </div>
+    </div>
+    <div id="fmTeaList">${renderFmTeaList('全部','全部')}</div>
   </div>`;
 }
-function renderFmTeaList(cat) {
-  const teas = cat==='全部'?FM_TEAS:FM_TEAS.filter(t=>t.category===cat);
+function renderFmTeaList(cat, season) {
+  // 合并基础茶饮和四季茶饮
+  const allTeas = [...FM_TEAS.map(t=>({...t,season:'四季'})), ...(typeof FM_SEASON_TEAS!=='undefined'?FM_SEASON_TEAS:[])];
+  let teas = allTeas;
+  if (cat && cat!=='全部') teas = teas.filter(t=>t.category===cat);
+  if (season && season!=='全部') teas = teas.filter(t=>t.season===season||t.season==='四季');
+  if (!teas.length) return '<p style="color:#999;text-align:center;padding:20px">该分类暂无茶饮，请切换筛选条件</p>';
   return teas.map(t=>`<div class="fm-tea-card">
-    <h4>🍵 ${t.name} <span class="fm-tag fm-tag-green">${t.category}</span></h4>
-    <p><b>配方：</b>${t.ingredients.map(i=>`${i.name} ${i.amount}`).join('、')}</p>
+    <h4>🍵 ${t.name} <span class="fm-tag fm-tag-green">${t.category}</span>${t.season&&t.season!=='四季'?`<span class="fm-tag fm-tag-orange">${t.season}季</span>`:''}</h4>
+    <p><b>配方：</b>${Array.isArray(t.ingredients)?t.ingredients.map(i=>`${i.name} ${i.amount}`).join('、'):t.ingredients}</p>
     <p><b>冲泡：</b>${t.brewing}</p>
-    <p><b>功效：</b>${t.benefits.join('、')}</p>
+    <p><b>功效：</b>${Array.isArray(t.benefits)?t.benefits.join('、'):t.benefits}</p>
     <p><b>最佳饮用时间：</b>${t.bestTime}</p>
-    <p><b>口感：</b>${t.taste}</p>
+    ${t.taste?`<p><b>口感：</b>${t.taste}</p>`:''}
     <p style="color:#c62828"><b>⚠️ 禁忌：</b>${t.contraindication}</p>
   </div>`).join('');
 }
-function fmFilterTea(cat){document.getElementById('fmTeaList').innerHTML=renderFmTeaList(cat);}
+let fmTeaCurrentCat='全部',fmTeaCurrentSeason='全部';
+function fmFilterTea(cat){fmTeaCurrentCat=cat;document.getElementById('fmTeaList').innerHTML=renderFmTeaList(cat,fmTeaCurrentSeason);document.querySelectorAll('#fmTeaFilter .fm-filter-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');}
+function fmFilterTeaBySeason(s){fmTeaCurrentSeason=s;document.getElementById('fmTeaList').innerHTML=renderFmTeaList(fmTeaCurrentCat,s);document.querySelectorAll('#fmTeaSeasonFilter .fm-filter-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');}
 
 // 脏腑食疗渲染
 let fmOrganCurrent = 'lung';
