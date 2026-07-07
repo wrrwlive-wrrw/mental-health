@@ -113,12 +113,17 @@ async function sendWmAgent() {
     const resp = await fetch(AI_CONFIG.apiUrl, {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_CONFIG.apiKey},
-      body:JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:2500, temperature:0.6})
+      body:JSON.stringify({model:AI_CONFIG.model, messages, max_tokens:3500, temperature:0.4})
     });
     if (!resp.ok) throw new Error('HTTP '+resp.status);
     const data = await resp.json();
     let reply = data.choices?.[0]?.message?.content || '';
+    // 清理思考标签
+    if (reply.includes('<think>')) reply = reply.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
     if (reply.includes('</think>')) reply = reply.split('</think>').pop().trim();
+    // 清理残余标签
+    reply = reply.replace(/^[\s\n]*/, '');
+    if (!reply) reply = '抱歉，未能生成有效回答，请重新描述您的问题。';
     wmAgentHistory.push({role:'ai', content:reply});
   } catch(e) {
     wmAgentHistory.push({role:'ai', content:'[连接失败] 请检查API设置。错误：'+e.message});
@@ -144,7 +149,14 @@ function getWmAgentSysPrompt(hasImages) {
 5. 心电图：分析各波段，给出诊断
 6. 将图片分析结果整合到整体诊断中`;
   }
-  base += '\n\n【回答风格】条理清晰，分段论述。专业术语配通俗解释。重要内容用【】标注。';
+  base += `\n\n【回答规范】
+1. 使用纯中文回答，结构清晰，分段论述
+2. 重要内容用【】标注，如【初步诊断】【鉴别诊断】【建议检查】
+3. 专业术语后用括号附通俗解释
+4. 药物标注：药名+规格+用法+疗程
+5. 诊断按可能性从高到低排列，标注概率判断
+6. 不要使用markdown代码块或特殊符号，保持简洁可读
+7. 末尾附免责声明：本分析仅供参考，请到正规医疗机构就诊`;
   return base;
 }
 
@@ -168,8 +180,27 @@ function refreshWmAgentChat() {
 }
 
 function formatWmAnswer(text) {
-  return text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
-    .replace(/【(.*?)】/g,'<b style="color:#1565c0">【$1】</b>');
+  if (!text) return '';
+  // 清理AI思考标签
+  if (text.includes('</think>')) text = text.split('</think>').pop().trim();
+  if (text.includes('<think>')) text = text.replace(/<think>[\s\S]*?(<\/think>|$)/g, '').trim();
+  // 清理残留的HTML标签（防止注入）
+  text = text.replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<\/?(?:script|style|iframe|object|embed)[^>]*>/gi, '');
+  // Markdown渲染
+  text = text.replace(/^### (.+)$/gm, '<h4 style="color:#1565c0;margin:12px 0 6px">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 style="color:#1565c0;margin:14px 0 8px">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3 style="color:#0d47a1;margin:14px 0 8px">$1</h3>')
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code style="background:#e3f2fd;padding:1px 4px;border-radius:3px;font-size:12px">$1</code>')
+    .replace(/^[-*] (.+)$/gm, '<div style="padding-left:12px;margin:2px 0">• $1</div>')
+    .replace(/^\d+\. (.+)$/gm, function(m, p1, offset, str) { return '<div style="padding-left:12px;margin:2px 0">' + m.match(/^\d+/)[0] + '. ' + p1 + '</div>'; })
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #e0e0e0;margin:10px 0">')
+    .replace(/【(.*?)】/g, '<b style="color:#1565c0">【$1】</b>')
+    .replace(/\n/g, '<br>');
+  return text;
 }
 
 // ========== 图片上传与预览（AI智能体） ==========
